@@ -5,4 +5,4 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/WadeGulbrandsen/aoc2024?logo=github)
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/WadeGulbrandsen/aoc2024/.github/workflows/test.yml?logo=github&label=tests)
 
-I'm doing [Advent of Code 2024](https://adventofcode.com/2023) in [Gleam](https://gleam.run/).
+I'm doing [Advent of Code 2024](https://adventofcode.com/2024) in [Gleam](https://gleam.run/).
