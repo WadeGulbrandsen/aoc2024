@@ -7,9 +7,10 @@ import gleam/int
 import gleam/io
 import gleam/pair
 import solvers/day01
+import solvers/day02
 import utils/puzzle
 
-const days = [#(1, day01.solve)]
+const days = [#(1, day01.solve), #(2, day02.solve)]
 
 type Args {
   Args(day: Int)
