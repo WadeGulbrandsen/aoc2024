@@ -8,22 +8,6 @@ import gleam/set.{type Set}
 import gleam/string
 import utils/helper
 
-fn part1(rules: Dict(String, List(String)), updates: List(List(String))) -> Int {
-  updates
-  |> list.filter(in_order(set.new(), rules, _))
-  |> list.map(middle_value)
-  |> int.sum
-}
-
-fn part2(rules: Dict(String, List(String)), updates: List(List(String))) -> Int {
-  let order_fn = fn(a, b) { order(a, b, rules) }
-  updates
-  |> list.filter(fn(u) { !in_order(set.new(), rules, u) })
-  |> list.map(list.sort(_, order_fn))
-  |> list.map(middle_value)
-  |> int.sum
-}
-
 fn order(a: String, b: String, rules: Dict(String, List(String))) -> Order {
   let after_a = dict.get(rules, a) |> result.unwrap([]) |> list.contains(b)
   let after_b = dict.get(rules, b) |> result.unwrap([]) |> list.contains(a)
@@ -69,10 +53,16 @@ pub fn solve(data: String) -> #(Int, Int) {
     |> list.group(pair.first)
     |> dict.map_values(fn(_, v) { v |> list.map(pair.second) })
 
-  let updates =
+  let order_fn = fn(a, b) { order(a, b, rules) }
+
+  let #(ordered, unordered) =
     updates
     |> string.split("\n")
     |> list.map(string.split(_, ","))
+    |> list.partition(in_order(set.new(), rules, _))
+    |> pair.map_second(list.map(_, list.sort(_, order_fn)))
+    |> helper.map_both(list.map(_, middle_value))
+    |> helper.map_both(int.sum)
 
-  #(part1(rules, updates), part2(rules, updates))
+  #(ordered, unordered)
 }

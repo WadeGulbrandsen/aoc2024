@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/pair
 import gleam/yielder
 
 pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
@@ -7,4 +8,8 @@ pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
     False -> index
   }
   list |> yielder.from_list |> yielder.at(i)
+}
+
+pub fn map_both(of pair: #(a, a), with fun: fn(a) -> b) -> #(b, b) {
+  #(pair |> pair.first |> fun, pair |> pair.second |> fun)
 }
