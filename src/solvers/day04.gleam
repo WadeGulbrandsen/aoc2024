@@ -1,45 +1,20 @@
-import gleam/dict.{type Dict}
+import gleam/dict
 import gleam/list
 import gleam/result
 import gleam/string
+import utils/grid.{type Grid, E, N, NE, NW, S, SE, SW, W}
 
-const u = #(-1, 0)
-
-const d = #(1, 0)
-
-const l = #(0, -1)
-
-const r = #(0, 1)
-
-const ul = #(-1, -1)
-
-const ur = #(-1, 1)
-
-const dl = #(1, -1)
-
-const dr = #(1, 1)
-
-type Point =
-  #(Int, Int)
-
-type Grid =
-  Dict(Point, String)
-
-fn add(a: Point, b: Point) -> Point {
-  #(a.0 + b.0, a.1 + b.1)
-}
-
-fn part1(puzzle: Grid) -> Int {
-  let directions = [u, d, l, r, ul, ur, dl, dr]
-  puzzle
+fn part1(puzzle: Grid(String)) -> Int {
+  let directions = [N, S, E, W, NE, NW, SE, SW]
+  puzzle.points
   |> dict.filter(fn(_, v) { v == "X" })
   |> dict.keys
   |> list.map(fn(xp) {
     list.map(directions, fn(d) {
-      let mp = add(xp, d)
-      let ap = add(mp, d)
-      let sp = add(ap, d)
-      case dict.get(puzzle, mp), dict.get(puzzle, ap), dict.get(puzzle, sp) {
+      let mp = grid.move(xp, d, 1)
+      let ap = grid.move(xp, d, 2)
+      let sp = grid.move(xp, d, 3)
+      case grid.get(puzzle, mp), grid.get(puzzle, ap), grid.get(puzzle, sp) {
         Ok("M"), Ok("A"), Ok("S") -> Ok([xp, mp, ap, sp])
         _, _, _ -> Error(Nil)
       }
@@ -50,14 +25,20 @@ fn part1(puzzle: Grid) -> Int {
   |> list.length
 }
 
-fn part2(puzzle: Grid) -> Int {
-  puzzle
+fn part2(puzzle: Grid(String)) -> Int {
+  puzzle.points
   |> dict.filter(fn(_, v) { v == "A" })
   |> dict.keys
   |> list.filter(fn(ap) {
-    case dict.get(puzzle, add(ap, ul)), dict.get(puzzle, add(ap, dr)) {
+    case
+      grid.get(puzzle, grid.move(ap, NE, 1)),
+      grid.get(puzzle, grid.move(ap, SW, 1))
+    {
       Ok("M"), Ok("S") | Ok("S"), Ok("M") -> {
-        case dict.get(puzzle, add(ap, ur)), dict.get(puzzle, add(ap, dl)) {
+        case
+          grid.get(puzzle, grid.move(ap, NW, 1)),
+          grid.get(puzzle, grid.move(ap, SE, 1))
+        {
           Ok("M"), Ok("S") | Ok("S"), Ok("M") -> True
           _, _ -> False
         }
@@ -68,19 +49,7 @@ fn part2(puzzle: Grid) -> Int {
   |> list.length
 }
 
-fn to_grid(data: String) -> Grid {
-  data
-  |> string.split("\n")
-  |> list.map(string.to_graphemes)
-  |> list.index_fold(dict.new(), fn(grid, letters, row) {
-    letters
-    |> list.index_fold(grid, fn(grid, letter, col) {
-      dict.insert(grid, #(row, col), letter)
-    })
-  })
-}
-
 pub fn solve(data: String) -> #(Int, Int) {
-  let puzzle = to_grid(data)
+  let puzzle = grid.from_string(data, string.to_graphemes, Ok)
   #(part1(puzzle), part2(puzzle))
 }
