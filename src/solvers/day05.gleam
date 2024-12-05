@@ -55,14 +55,11 @@ pub fn solve(data: String) -> #(Int, Int) {
 
   let order_fn = fn(a, b) { order(a, b, rules) }
 
-  let #(ordered, unordered) =
-    updates
-    |> string.split("\n")
-    |> list.map(string.split(_, ","))
-    |> list.partition(in_order(set.new(), rules, _))
-    |> pair.map_second(list.map(_, list.sort(_, order_fn)))
-    |> helper.map_both(list.map(_, middle_value))
-    |> helper.map_both(int.sum)
-
-  #(ordered, unordered)
+  updates
+  |> string.split("\n")
+  |> list.map(string.split(_, ","))
+  |> list.partition(in_order(set.new(), rules, _))
+  |> pair.map_second(list.map(_, list.sort(_, order_fn)))
+  |> helper.map_both(list.map(_, middle_value))
+  |> helper.map_both(int.sum)
 }
