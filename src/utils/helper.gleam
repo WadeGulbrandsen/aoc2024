@@ -1,13 +1,8 @@
-import gleam/list
 import gleam/pair
 import gleam/yielder
 
 pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
-  let i = case index < 0 {
-    True -> list.length(list) + index
-    False -> index
-  }
-  list |> yielder.from_list |> yielder.at(i)
+  list |> yielder.from_list |> yielder.at(index)
 }
 
 pub fn map_both(of pair: #(a, a), with fun: fn(a) -> b) -> #(b, b) {

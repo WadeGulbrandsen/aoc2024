@@ -1,10 +1,5 @@
-import gleeunit
 import gleeunit/should
 import solvers/day03
-
-pub fn main() {
-  gleeunit.main()
-}
 
 pub fn part1_test() {
   day03.part1(

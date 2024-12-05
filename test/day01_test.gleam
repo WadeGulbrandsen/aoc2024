@@ -1,10 +1,5 @@
-import gleeunit
 import gleeunit/should
 import solvers/day01
-
-pub fn main() {
-  gleeunit.main()
-}
 
 const sample = "3   4
 4   3
