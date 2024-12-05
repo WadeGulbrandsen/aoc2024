@@ -6,22 +6,13 @@ import gleam/pair
 import gleam/result
 import gleam/set.{type Set}
 import gleam/string
+import utils/helper
 
-fn part1(
-  sum: Int,
-  rules: Dict(String, List(String)),
-  updates: List(List(String)),
-) -> Int {
-  case updates {
-    [] -> sum
-    [u, ..rest] -> {
-      let value = case in_order(set.new(), rules, u) {
-        True -> middle_value(u)
-        False -> 0
-      }
-      part1(sum + value, rules, rest)
-    }
-  }
+fn part1(rules: Dict(String, List(String)), updates: List(List(String))) -> Int {
+  updates
+  |> list.filter(in_order(set.new(), rules, _))
+  |> list.map(middle_value)
+  |> int.sum
 }
 
 fn part2(rules: Dict(String, List(String)), updates: List(List(String))) -> Int {
@@ -34,9 +25,9 @@ fn part2(rules: Dict(String, List(String)), updates: List(List(String))) -> Int 
 }
 
 fn order(a: String, b: String, rules: Dict(String, List(String))) -> Order {
-  let after_a = dict.get(rules, a) |> result.unwrap([])
-  let after_b = dict.get(rules, b) |> result.unwrap([])
-  case list.contains(after_a, b), list.contains(after_b, a) {
+  let after_a = dict.get(rules, a) |> result.unwrap([]) |> list.contains(b)
+  let after_b = dict.get(rules, b) |> result.unwrap([]) |> list.contains(a)
+  case after_a, after_b {
     True, _ -> order.Lt
     _, True -> order.Gt
     _, _ -> order.Eq
@@ -45,8 +36,7 @@ fn order(a: String, b: String, rules: Dict(String, List(String))) -> Order {
 
 fn middle_value(update: List(String)) -> Int {
   update
-  |> list.take(list.length(update) / 2 + 1)
-  |> list.last
+  |> helper.at_index(list.length(update) / 2)
   |> result.try(int.parse)
   |> result.unwrap(0)
 }
@@ -70,6 +60,7 @@ fn in_order(
 
 pub fn solve(data: String) -> #(Int, Int) {
   let assert Ok(#(rules, updates)) = string.split_once(data, "\n\n")
+
   let rules =
     rules
     |> string.split("\n")
@@ -77,10 +68,11 @@ pub fn solve(data: String) -> #(Int, Int) {
     |> result.values
     |> list.group(pair.first)
     |> dict.map_values(fn(_, v) { v |> list.map(pair.second) })
+
   let updates =
     updates
     |> string.split("\n")
     |> list.map(string.split(_, ","))
 
-  #(part1(0, rules, updates), part2(rules, updates))
+  #(part1(rules, updates), part2(rules, updates))
 }
