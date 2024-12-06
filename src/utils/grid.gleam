@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
@@ -76,4 +77,58 @@ pub fn add_points(first_point a: Point, second_point b: Point) -> Point {
 
 pub fn get(grid grid: Grid(a), point point: Point) -> Result(a, Nil) {
   dict.get(grid.points, point)
+}
+
+pub fn remove(grid grid: Grid(a), point point: Point) -> Grid(a) {
+  Grid(..grid, points: grid.points |> dict.delete(point))
+}
+
+pub fn insert(
+  grid grid: Grid(a),
+  point point: Point,
+  value value: a,
+) -> Result(Grid(a), Nil) {
+  use <- bool.guard(!in_bounds(grid, point), Error(Nil))
+  Ok(Grid(..grid, points: grid.points |> dict.insert(point, value)))
+}
+
+pub fn in_bounds(grid grid: Grid(a), point point: Point) -> Bool {
+  point.x >= 0 && point.x < grid.width && point.y >= 0 && point.y < grid.height
+}
+
+pub fn filter(
+  in grid: Grid(a),
+  keeping predicate: fn(Point, a) -> Bool,
+) -> Grid(a) {
+  Grid(..grid, points: dict.filter(grid.points, predicate))
+}
+
+pub fn size(grid grid: Grid(a)) -> Int {
+  grid.points |> dict.size
+}
+
+pub fn rotate_right(direction dir: Direction) -> Direction {
+  case dir {
+    N -> E
+    E -> S
+    S -> W
+    W -> N
+    NE -> SE
+    SE -> SW
+    SW -> NW
+    NW -> NE
+  }
+}
+
+pub fn rotate_left(direction dir: Direction) -> Direction {
+  case dir {
+    N -> W
+    W -> S
+    S -> E
+    E -> N
+    NE -> NW
+    NW -> SW
+    SW -> SE
+    SE -> NE
+  }
 }
