@@ -4,7 +4,6 @@ import gleam/list
 import gleam/order.{type Order}
 import gleam/pair
 import gleam/result
-import gleam/set.{type Set}
 import gleam/string
 import utils/helper
 
@@ -25,21 +24,10 @@ fn middle_value(update: List(String)) -> Int {
   |> result.unwrap(0)
 }
 
-fn in_order(
-  seen: Set(String),
-  rules: Dict(String, List(String)),
-  update: List(String),
-) -> Bool {
-  case update {
-    [] -> True
-    [x, ..rest] ->
-      case
-        dict.get(rules, x) |> result.map(list.any(_, set.contains(seen, _)))
-      {
-        Ok(True) -> False
-        _ -> in_order(set.insert(seen, x), rules, rest)
-      }
-  }
+fn in_order(update: List(String), rules: Dict(String, List(String))) -> Bool {
+  update
+  |> list.window_by_2
+  |> list.all(fn(p) { order(pair.first(p), pair.second(p), rules) != order.Gt })
 }
 
 pub fn solve(data: String) -> #(Int, Int) {
@@ -58,7 +46,7 @@ pub fn solve(data: String) -> #(Int, Int) {
   updates
   |> string.split("\n")
   |> list.map(string.split(_, ","))
-  |> list.partition(in_order(set.new(), rules, _))
+  |> list.partition(in_order(_, rules))
   |> pair.map_second(list.map(_, list.sort(_, order_fn)))
   |> helper.map_both(list.map(_, middle_value))
   |> helper.map_both(int.sum)
