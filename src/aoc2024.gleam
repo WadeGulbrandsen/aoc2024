@@ -6,6 +6,8 @@ import gleam/dict
 import gleam/int
 import gleam/io
 import gleam/pair
+import gleam/string
+import pocket_watch
 import solvers/day01
 import solvers/day02
 import solvers/day03
@@ -61,7 +63,10 @@ pub fn main() {
     |> clip.run(argv.load().arguments)
   case result {
     Error(e) -> io.println_error(e)
-    Ok(args) ->
+    Ok(args) -> {
+      use <- pocket_watch.simple(
+        "Day " <> string.pad_start(int.to_string(args.day), 2, "0"),
+      )
       case do_aoc(args.day) {
         Error(e) -> io.println_error(e)
         Ok(results) -> {
@@ -70,5 +75,6 @@ pub fn main() {
           io.println("Part 2: " <> int.to_string(pair.second(results)))
         }
       }
+    }
   }
 }
