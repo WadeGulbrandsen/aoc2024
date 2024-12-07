@@ -14,11 +14,12 @@ import solvers/day03
 import solvers/day04
 import solvers/day05
 import solvers/day06
+import solvers/day07
 import utils/puzzle
 
 const days = [
   #(1, day01.solve), #(2, day02.solve), #(3, day03.solve), #(4, day04.solve),
-  #(5, day05.solve), #(6, day06.solve),
+  #(5, day05.solve), #(6, day06.solve), #(7, day07.solve),
 ]
 
 type Args {
@@ -41,7 +42,13 @@ fn do_aoc(day: Int) -> Result(#(Int, Int), String) {
   case dict.get(day_functions, day) {
     Ok(function) ->
       case day |> puzzle.get_input {
-        Ok(input) -> Ok(function(input))
+        Ok(input) ->
+          Ok({
+            use <- pocket_watch.simple(
+              "Day " <> string.pad_start(int.to_string(day), 2, "0"),
+            )
+            function(input)
+          })
         Error(message) -> Error(message)
       }
     _ -> Error("Day " <> int.to_string(day) <> " has not been implented.")
@@ -64,9 +71,6 @@ pub fn main() {
   case result {
     Error(e) -> io.println_error(e)
     Ok(args) -> {
-      use <- pocket_watch.simple(
-        "Day " <> string.pad_start(int.to_string(args.day), 2, "0"),
-      )
       case do_aoc(args.day) {
         Error(e) -> io.println_error(e)
         Ok(results) -> {
