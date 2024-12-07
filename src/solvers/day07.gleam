@@ -1,63 +1,43 @@
-import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/string
 
-fn part1(calibrations: Dict(Int, List(Int))) -> Int {
+fn check_calibrations(
+  calibrations: List(#(Int, List(Int))),
+  ops: List(fn(Int, Int) -> Int),
+) -> Int {
   calibrations
-  |> dict.filter(fn(k, v) { solveable(k, [v]) })
-  |> dict.keys
-  |> int.sum
-}
-
-fn part2(calibrations: Dict(Int, List(Int))) -> Int {
-  calibrations
-  |> dict.filter(fn(k, v) { with_concatenation(k, [v]) })
-  |> dict.keys
+  |> list.filter(fn(c) { is_solveable(c.0, [c.1], ops) })
+  |> list.map(pair.first)
   |> int.sum
 }
 
 fn concat(a: Int, b: Int) -> Int {
   let assert Ok(a_digits) = int.digits(a, 10)
   let assert Ok(b_digits) = int.digits(b, 10)
-
   a_digits
   |> list.append(b_digits)
   |> int.undigits(10)
   |> result.unwrap(0)
 }
 
-fn with_concatenation(result: Int, to_check: List(List(Int))) -> Bool {
+fn is_solveable(
+  result: Int,
+  to_check: List(List(Int)),
+  ops: List(fn(Int, Int) -> Int),
+) -> Bool {
   case to_check {
     [] -> False
     [[x], ..] if x == result -> True
     [calibration, ..rest] -> {
       let to_check = case calibration {
         [] | [_] -> rest
-        [a, b, ..tail] -> [
-          [a + b, ..tail],
-          [a * b, ..tail],
-          [concat(a, b), ..tail],
-          ..rest
-        ]
+        [a, b, ..tail] ->
+          ops |> list.map(fn(op) { [op(a, b), ..tail] }) |> list.append(rest)
       }
-      with_concatenation(result, to_check)
-    }
-  }
-}
-
-fn solveable(result: Int, to_check: List(List(Int))) -> Bool {
-  case to_check {
-    [] -> False
-    [[x], ..] if x == result -> True
-    [calibration, ..rest] -> {
-      let to_check = case calibration {
-        [] | [_] -> rest
-        [a, b, ..tail] -> [[a + b, ..tail], [a * b, ..tail], ..rest]
-      }
-      solveable(result, to_check)
+      is_solveable(result, to_check, ops)
     }
   }
 }
@@ -78,7 +58,9 @@ pub fn solve(data: String) -> #(Int, Int) {
           |> result.values,
       )
     })
-    |> dict.from_list
 
-  #(part1(calibrations), part2(calibrations))
+  #(
+    check_calibrations(calibrations, [int.add, int.multiply]),
+    check_calibrations(calibrations, [int.add, int.multiply, concat]),
+  )
 }
