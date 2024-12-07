@@ -3,17 +3,16 @@ import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/string
-import gleam/yielder
+import utils/helper
 
 fn check_calibrations(
   calibrations: List(#(Int, List(Int))),
   ops: List(fn(Int, Int) -> Int),
 ) -> Int {
   calibrations
-  |> yielder.from_list
-  |> yielder.filter(fn(c) { is_solveable(c.0, [c.1], ops) })
-  |> yielder.map(pair.first)
-  |> yielder.fold(0, int.add)
+  |> helper.parallel_filter(fn(c) { is_solveable(c.0, [c.1], ops) })
+  |> list.map(pair.first)
+  |> int.sum
 }
 
 fn concat(a: Int, b: Int) -> Int {
