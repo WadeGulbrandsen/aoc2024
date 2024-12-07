@@ -1,3 +1,6 @@
+import gleam/erlang/process
+import gleam/int
+import gleam/list
 import gleeunit/should
 import utils/helper
 
@@ -20,4 +23,24 @@ pub fn at_index_test() {
 
   helper.at_index(list, 3)
   |> should.be_error
+}
+
+pub fn parallel_map_test() {
+  let list = list.range(0, 1000)
+  list
+  |> helper.parallel_map(fn(x) {
+    process.sleep(100)
+    x
+  })
+  |> should.equal(list)
+}
+
+pub fn parallel_filter_test() {
+  let list = list.range(0, 1000)
+  list
+  |> helper.parallel_filter(fn(x) {
+    process.sleep(100)
+    int.is_even(x)
+  })
+  |> should.equal(list |> list.filter(int.is_even))
 }

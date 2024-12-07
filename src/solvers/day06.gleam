@@ -5,6 +5,7 @@ import gleam/result
 import gleam/set.{type Set}
 import gleam/string
 import utils/grid.{type Direction, type Grid, type Point, E, Grid, N, S, W}
+import utils/helper
 
 type Map {
   Obstacle
@@ -64,7 +65,8 @@ pub fn solve(data: String) -> #(Int, Int) {
     map |> patrol(position, direction, set.new(), set.new())
   let loops =
     patrolled
-    |> set.filter(is_loop(_, map, position, direction))
-    |> set.size
+    |> set.to_list
+    |> helper.parallel_filter(is_loop(_, map, position, direction))
+    |> list.length
   #(set.size(patrolled), loops)
 }
