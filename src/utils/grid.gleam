@@ -75,6 +75,10 @@ pub fn add_points(first_point a: Point, second_point b: Point) -> Point {
   Point(a.x + b.x, a.y + b.y)
 }
 
+pub fn subtract_points(first_point a: Point, second_point b: Point) -> Point {
+  Point(a.x - b.x, a.y - b.y)
+}
+
 pub fn get(grid grid: Grid(a), point point: Point) -> Result(a, Nil) {
   dict.get(grid.points, point)
 }

@@ -15,11 +15,12 @@ import solvers/day04
 import solvers/day05
 import solvers/day06
 import solvers/day07
+import solvers/day08
 import utils/puzzle
 
 const days = [
   #(1, day01.solve), #(2, day02.solve), #(3, day03.solve), #(4, day04.solve),
-  #(5, day05.solve), #(6, day06.solve), #(7, day07.solve),
+  #(5, day05.solve), #(6, day06.solve), #(7, day07.solve), #(8, day08.solve),
 ]
 
 type Args {
