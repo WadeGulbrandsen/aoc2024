@@ -38,7 +38,7 @@ pub fn get_answers() -> Dict(Int, Answer) {
   |> simplifile.read
   |> result.replace_error(Nil)
   |> result.try(decode_answers)
-  |> result.map(list.map(_, fn(a) { #(a.day, a) }))
+  |> result.map(list.map(_, fn(a: Answer) { #(a.day, a) }))
   |> result.map(dict.from_list)
   |> result.unwrap(dict.new())
 }
