@@ -9,7 +9,6 @@ import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
-import pprint
 import simplifile
 import utils/helper
 import utils/ppjson
@@ -68,7 +67,6 @@ pub fn update_answer(answer: Answer, answers: Dict(Int, Answer)) -> Nil {
     })
     |> ppjson.Array
     |> ppjson.to_string(80)
-    |> pprint.debug
 
   case simplifile.write(answers_path, json) {
     Ok(Nil) -> io.println("Done!")

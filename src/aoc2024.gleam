@@ -1,17 +1,22 @@
 import argv
 import birl
 import clip
+import clip/arg
 import clip/help
-import clip/opt
-import gleam/dict.{type Dict}
+import gleam/dict
+import gleam/function
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/string
+import gleam/yielder
 import gleam_community/ansi
+import glitzer/progress
+import glitzer/spinner
 import humanise
+import simplifile
 import solvers/day01
 import solvers/day02
 import solvers/day03
@@ -21,8 +26,9 @@ import solvers/day06
 import solvers/day07
 import solvers/day08
 import solvers/day09
-import utils/markdown
+import utils/helper
 import utils/puzzle.{type Answer, Answer}
+import utils/table
 
 const days = [
   #(1, day01.solve), #(2, day02.solve), #(3, day03.solve), #(4, day04.solve),
@@ -31,27 +37,49 @@ const days = [
 ]
 
 type Args {
-  Day(day: Result(Int, Nil))
+  Day(day: Int)
+  All
+  SaveMD
 }
 
 fn day() {
-  opt.new("day")
-  |> opt.help("Which day should be run: 1-25")
-  |> opt.try_map(fn(v) {
+  arg.new("day")
+  |> arg.help("Which day should be run: 1-25")
+  |> arg.try_map(fn(v) {
     case int.parse(v) {
       Ok(x) if x >= 1 && x <= 25 -> Ok(x)
       _ -> Error("day must be a number between 1 and 25")
     }
   })
-  |> opt.optional
 }
 
-fn command() {
+fn day_command() {
   clip.command({
     use day <- clip.parameter
     Day(day)
   })
-  |> clip.opt(day())
+  |> clip.arg(day())
+  |> clip.help(help.simple("aoc2024 day", "Runs the specified day"))
+}
+
+fn all_command() {
+  clip.return(All) |> clip.help(help.simple("aoc2024 all", "Runs all days"))
+}
+
+fn save_md_command() {
+  clip.return(SaveMD)
+  |> clip.help(help.simple("aoc2024 save", "Saves times to a markdown"))
+}
+
+fn command() {
+  clip.subcommands_with_default(
+    [
+      #("day", day_command()),
+      #("all", all_command()),
+      #("save", save_md_command()),
+    ],
+    all_command(),
+  )
 }
 
 fn timed(body: fn() -> a) -> #(Int, a) {
@@ -61,7 +89,7 @@ fn timed(body: fn() -> a) -> #(Int, a) {
   #(elapsed, value)
 }
 
-fn do_day(
+fn evaluate_day(
   day: Int,
   function: fn(String) -> #(Int, Int),
 ) -> Result(#(Int, #(Int, Int)), String) {
@@ -119,14 +147,99 @@ fn print_day_result(
   }
 }
 
-fn do_all_days(day_functions: Dict(Int, fn(String) -> #(Int, Int))) -> Nil {
+fn run_days(first: Int, last: Int) {
+  let filtered =
+    dict.from_list(days)
+    |> dict.filter(fn(d, _) { d >= first && d <= last })
+  let bar =
+    progress.fancy_thick_bar()
+    |> progress.with_length(dict.size(filtered))
+    |> progress.with_left_text("[")
+  let results =
+    filtered
+    |> dict.to_list
+    |> yielder.from_list
+    |> progress.map_yielder(bar, fn(bar, p) {
+      bar
+      |> progress.with_right_text(
+        "] Evaluating day " <> string.pad_start(int.to_string(p.0), 2, "0"),
+      )
+      |> progress.print_bar
+      #(p.0, evaluate_day(p.0, p.1))
+    })
+    |> yielder.to_list
+    |> dict.from_list
+
+  bar
+  |> progress.with_right_text("] Done!\n")
+  |> progress.finish
+  |> progress.print_bar
+  results
+}
+
+fn save_md() {
+  let results = run_days(1, 25)
+  let headers = ["Day", "Time"] |> list.map(table.Cell(_, 1, function.identity))
+  let coldefs = [
+    5 |> table.ColDef(table.Right),
+    60 |> table.ColDef(table.Right),
+  ]
+  let rows =
+    results
+    |> dict.fold([], fn(rows, day, result) {
+      let value = case result {
+        Ok(#(time, _)) -> humanise.microseconds_int(time)
+        Error(e) -> e
+      }
+      [int.to_string(day), value]
+      |> list.map(table.Cell(_, 1, function.identity))
+      |> list.wrap
+      |> list.append(rows, _)
+    })
+
+  let total_time =
+    results
+    |> dict.values
+    |> result.values
+    |> list.map(pair.first)
+    |> int.sum
+
+  let total_row = [
+    table.Cell("TOTAL", 1, function.identity),
+    table.Cell(humanise.microseconds_int(total_time), 1, function.identity),
+  ]
+
+  let table =
+    table.Table(headers, coldefs, list.append(rows, [total_row]))
+    |> table.table_to_markdown
+
+  io.println("Saving times...")
+  let md =
+    [
+      "# Run times",
+      "Run at "
+        <> birl.utc_now() |> birl.to_iso8601
+        <> " using "
+        <> int.to_string(helper.get_thread_count())
+        <> " threads.",
+      table,
+    ]
+    |> string.join("\n\n")
+  let md_path = "./Times.md"
+  case simplifile.write(md_path, md) {
+    Ok(Nil) -> io.println("Done!")
+    Error(_) -> io.println_error("Could not write " <> md_path)
+  }
+}
+
+fn do_all_days() -> Nil {
+  let results = run_days(1, 25)
   let answers = puzzle.get_answers()
   let headers =
     ["Day", "Part 1", "Part 2", "Time"]
-    |> list.map(markdown.Cell(_, 1, ansi.reset))
+    |> list.map(table.Cell(_, 1, ansi.reset))
   let widths = [3, 20, 20, 10]
-  let coldefs = widths |> list.map(markdown.ColDef(_, markdown.Right))
-  let results = day_functions |> dict.map_values(do_day)
+  let coldefs = widths |> list.map(table.ColDef(_, table.Right))
   let rows =
     results
     |> dict.fold([], fn(rows, day, result) {
@@ -149,14 +262,14 @@ fn do_all_days(day_functions: Dict(Int, fn(String) -> #(Int, Int))) -> Nil {
             result_colour(saved.part2, part2),
           )
           [#(int.to_string(day), ansi.reset), p1, p2]
-          |> list.map(fn(p) { markdown.Cell(p.0, 1, p.1) })
+          |> list.map(fn(p) { table.Cell(p.0, 1, p.1) })
           |> list.append([
-            markdown.Cell(humanise.microseconds_int(time), 1, ansi.reset),
+            table.Cell(humanise.microseconds_int(time), 1, ansi.reset),
           ])
         }
         Error(e) -> [
-          markdown.Cell(int.to_string(day), 1, ansi.red),
-          markdown.Cell(e, 3, ansi.red),
+          table.Cell(int.to_string(day), 1, ansi.red),
+          table.Cell(e, 3, ansi.red),
         ]
       }
       list.append(rows, [row])
@@ -170,19 +283,40 @@ fn do_all_days(day_functions: Dict(Int, fn(String) -> #(Int, Int))) -> Nil {
     |> int.sum
 
   let total_row = [
-    markdown.Cell("TOTAL", 3, ansi.bright_blue),
-    markdown.Cell(humanise.microseconds_int(total_time), 1, ansi.bright_blue),
+    table.Cell("TOTAL", 3, ansi.bright_blue),
+    table.Cell(humanise.microseconds_int(total_time), 1, ansi.bright_blue),
   ]
 
   let delim_row =
     widths
     |> list.map(string.repeat("-", _))
-    |> list.map(markdown.Cell(_, 1, ansi.blue))
+    |> list.map(table.Cell(_, 1, ansi.blue))
 
-  markdown.Table(headers, coldefs, list.append(rows, [delim_row, total_row]))
-  |> markdown.table_to_string
+  table.Table(headers, coldefs, list.append(rows, [delim_row, total_row]))
+  |> table.table_to_markdown
   |> io.println
-  Nil
+}
+
+fn do_day(day: Int) {
+  let s =
+    spinner.spinning_spinner()
+    |> spinner.with_left_text("Evaluating day " <> int.to_string(day) <> " ")
+    |> spinner.with_finish_text(
+      "Done evaluating day " <> int.to_string(day) <> "\n",
+    )
+    |> spinner.spin
+
+  let result =
+    dict.from_list(days)
+    |> dict.get(day)
+    |> result.replace_error(
+      "Day " <> int.to_string(day) <> " is not implemented yet.",
+    )
+    |> result.try(evaluate_day(day, _))
+
+  spinner.finish(s)
+
+  result |> print_day_result(day)
 }
 
 pub fn main() {
@@ -192,20 +326,8 @@ pub fn main() {
     |> clip.run(argv.load().arguments)
   case result {
     Error(e) -> io.println_error(e)
-    Ok(args) -> {
-      let day_functions = dict.from_list(days)
-      case args.day {
-        Error(Nil) -> do_all_days(day_functions)
-        Ok(day) -> {
-          day_functions
-          |> dict.get(day)
-          |> result.replace_error(
-            "Day " <> int.to_string(day) <> " is not implemented yet.",
-          )
-          |> result.try(do_day(day, _))
-          |> print_day_result(day)
-        }
-      }
-    }
+    Ok(All) -> do_all_days()
+    Ok(Day(day)) -> do_day(day)
+    Ok(SaveMD) -> save_md()
   }
 }

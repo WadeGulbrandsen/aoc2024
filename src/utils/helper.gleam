@@ -1,4 +1,5 @@
 import gleam/dynamic.{type Dynamic}
+import gleam/erlang/atom
 import gleam/list
 import gleam/otp/task
 import gleam/pair
@@ -49,4 +50,13 @@ pub fn ask_yn(prompt: String, default: Bool) -> Bool {
     "" -> default
     _ -> ask_yn(prompt, default)
   }
+}
+
+@external(erlang, "erlang", "system_info")
+fn ext_system_info(item: atom.Atom) -> Dynamic
+
+pub fn get_thread_count() -> Int {
+  let atom = atom.create_from_string("logical_processors")
+  let info = ext_system_info(atom)
+  info |> dynamic.int |> result.unwrap(0)
 }

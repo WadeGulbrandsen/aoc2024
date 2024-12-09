@@ -11,6 +11,10 @@ I'm doing [Advent of Code 2024](https://adventofcode.com/2024) in [Gleam](https:
 
 Puzzle input should be stored in the `./input` directory with file names formatted as `dayXX.txt` where XX is the two digit number of the day.
 
+## Run time
+
+The time each day's solutions take to run are available in [Times.md](./Times.md)
+
 ### Automatic download of puzzle input
 
 If you don't want to manually download the data and copy it to the `input` directory it can be downloaded automatically if you have a `./input/session.txt` file that has your session cookie in it.
