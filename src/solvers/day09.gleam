@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/deque.{type Deque}
 import gleam/int
 import gleam/list
@@ -6,64 +7,71 @@ import gleam/string
 import gleam/yielder
 
 type FileSystem {
-  Empty(size: Int)
+  Space(size: Int)
   File(size: Int, id: Int)
+}
+
+fn is_space(fs: FileSystem) -> Bool {
+  case fs {
+    Space(_) -> True
+    _ -> False
+  }
 }
 
 fn disk_map(map: List(Int), acc: List(FileSystem), id: Int) -> List(FileSystem) {
   case map {
     [] -> acc |> list.reverse
     [f] -> [File(f, id), ..acc] |> list.reverse
-    [f, e, ..rest] -> disk_map(rest, [Empty(e), File(f, id), ..acc], id + 1)
+    [f, e, ..rest] -> disk_map(rest, [Space(e), File(f, id), ..acc], id + 1)
   }
 }
 
-fn part1(map: List(FileSystem)) -> Int {
-  compact(map |> deque.from_list, [], 0) |> checksum
+fn part1(map: Deque(FileSystem)) -> Int {
+  compact(map, [], 0) |> checksum
 }
 
-fn part2(map: List(FileSystem)) -> Int {
-  move_files(map |> list.reverse, []) |> checksum
+fn part2(map: Deque(FileSystem)) -> Int {
+  move_files(map, []) |> checksum
 }
 
-fn move_files(
-  map: List(FileSystem),
-  compacted: List(FileSystem),
-) -> List(FileSystem) {
-  case map {
-    [] -> compacted
-    [fs, ..rest] -> {
-      let #(rest, compacted) = case fs {
-        Empty(_) -> #(rest, [fs, ..compacted])
-        File(_, _) -> fill_space(fs, rest, compacted)
-      }
-      move_files(rest, compacted)
+fn move_files(map: Deque(FileSystem), end: List(FileSystem)) {
+  case deque.pop_back(map) {
+    Error(Nil) -> end
+    Ok(#(fs, rest)) -> {
+      let #(map, end) = fill_space(fs, rest, end)
+      move_files(map, end)
     }
   }
 }
 
 fn fill_space(
-  file: FileSystem,
-  map: List(FileSystem),
-  compacted: List(FileSystem),
-) -> #(List(FileSystem), List(FileSystem)) {
-  let split_fn = fn(fs) {
-    case fs {
-      Empty(x) if x >= file.size -> False
-      _ -> True
+  fs: FileSystem,
+  map: Deque(FileSystem),
+  end: List(FileSystem),
+) -> #(Deque(FileSystem), List(FileSystem)) {
+  use <- bool.guard(is_space(fs), #(map, [fs, ..end]))
+  case get_space([], map, fs.size) {
+    Ok(#(before, space, map)) -> {
+      let before = case space > fs.size {
+        False -> [fs, ..before]
+        True -> [Space(space - fs.size), fs, ..before]
+      }
+      let map = before |> list.fold(map, deque.push_front)
+      #(map, [Space(fs.size), ..end])
     }
+    _ -> #(map, [fs, ..end])
   }
-  let #(before, after) = map |> list.reverse |> list.split_while(split_fn)
-  case after {
-    [Empty(x), ..rest] if x == file.size -> #(
-      list.flatten([before, [file], rest]) |> list.reverse,
-      [Empty(x), ..compacted],
-    )
-    [Empty(x), ..rest] if x > file.size -> #(
-      list.flatten([before, [file, Empty(x - file.size)], rest]) |> list.reverse,
-      [Empty(file.size), ..compacted],
-    )
-    _ -> #(map, [file, ..compacted])
+}
+
+fn get_space(
+  before: List(FileSystem),
+  map: Deque(FileSystem),
+  size: Int,
+) -> Result(#(List(FileSystem), Int, Deque(FileSystem)), Nil) {
+  case deque.pop_front(map) {
+    Error(_) -> Error(Nil)
+    Ok(#(Space(x), rest)) if x >= size -> Ok(#(before, x, rest))
+    Ok(#(fs, rest)) -> get_space([fs, ..before], rest, size)
   }
 }
 
@@ -73,15 +81,15 @@ fn compact(
   end: Int,
 ) -> List(FileSystem) {
   case deque.pop_front(map) {
-    Error(Nil) -> [Empty(end), ..compacted] |> list.reverse
+    Error(Nil) -> [Space(end), ..compacted] |> list.reverse
     Ok(#(fs, rest)) -> {
       let #(map, compacted, end) = case fs {
         File(_, _) -> #(rest, [fs, ..compacted], end)
-        Empty(0) -> #(rest, compacted, end)
-        Empty(x) ->
+        Space(0) -> #(rest, compacted, end)
+        Space(x) ->
           case deque.pop_back(rest) {
             Error(Nil) -> #(rest, compacted, end + x)
-            Ok(#(Empty(y), rest)) -> #(
+            Ok(#(Space(y), rest)) -> #(
               rest |> deque.push_front(fs),
               compacted,
               end + y,
@@ -97,7 +105,7 @@ fn compact(
               end + s,
             )
             Ok(#(File(s, i), rest)) -> #(
-              rest |> deque.push_front(Empty(x - s)),
+              rest |> deque.push_front(Space(x - s)),
               [File(s, i), ..compacted],
               end + s,
             )
@@ -113,7 +121,7 @@ fn checksum(map: List(FileSystem)) -> Int {
   |> yielder.from_list
   |> yielder.flat_map(fn(fs) {
     case fs {
-      Empty(s) -> yielder.repeat(0) |> yielder.take(s)
+      Space(s) -> yielder.repeat(0) |> yielder.take(s)
       File(s, i) -> yielder.repeat(i) |> yielder.take(s)
     }
   })
@@ -128,5 +136,6 @@ pub fn solve(data: String) -> #(Int, Int) {
     |> list.map(int.parse)
     |> result.values
     |> disk_map([], 0)
+    |> deque.from_list
   #(part1(map), part2(map))
 }
