@@ -12,7 +12,6 @@ import gleam/result
 import gleam/string
 import gleam_community/ansi
 import humanise
-import pprint
 import solvers/day01
 import solvers/day02
 import solvers/day03
@@ -22,7 +21,6 @@ import solvers/day06
 import solvers/day07
 import solvers/day08
 import solvers/day09
-import utils/helper
 import utils/markdown
 import utils/puzzle.{type Answer, Answer}
 
