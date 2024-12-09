@@ -1,6 +1,9 @@
+import gleam/dynamic.{type Dynamic}
 import gleam/list
 import gleam/otp/task
 import gleam/pair
+import gleam/result
+import gleam/string
 import gleam/yielder
 
 pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
@@ -25,4 +28,25 @@ pub fn parallel_filter(
   |> parallel_map(fn(item) { #(item, predicate(item)) })
   |> list.filter(pair.second)
   |> list.map(pair.first)
+}
+
+@external(erlang, "io", "get_line")
+@external(javascript, "./js_ffi.mjs", "read_line")
+fn ext_read_line(prompt: String) -> Dynamic
+
+pub fn read_line(prompt: String) -> String {
+  ext_read_line(prompt)
+  |> dynamic.from
+  |> dynamic.string
+  |> result.unwrap("")
+  |> string.trim_end
+}
+
+pub fn ask_yn(prompt: String, default: Bool) -> Bool {
+  case read_line(prompt <> "\n") |> string.uppercase {
+    "Y" -> True
+    "N" -> False
+    "" -> default
+    _ -> ask_yn(prompt, default)
+  }
 }
