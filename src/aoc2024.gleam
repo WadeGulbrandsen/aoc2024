@@ -287,13 +287,8 @@ fn do_all_days() -> Nil {
     table.Cell(humanise.microseconds_int(total_time), 1, ansi.bright_blue),
   ]
 
-  let delim_row =
-    widths
-    |> list.map(string.repeat("-", _))
-    |> list.map(table.Cell(_, 1, ansi.blue))
-
-  table.Table(headers, coldefs, list.append(rows, [delim_row, total_row]))
-  |> table.table_to_markdown
+  table.Table(headers, coldefs, list.append(rows, [total_row]))
+  |> table.table_to_string(table.double_boarder())
   |> io.println
 }
 
