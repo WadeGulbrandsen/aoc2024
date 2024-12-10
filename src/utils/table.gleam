@@ -87,8 +87,14 @@ pub type Table {
   Table(headings: List(Cell), coldefs: List(ColDef), rows: List(List(Cell)))
 }
 
-pub fn table_to_string(table: Table, boarder: Boarder) -> String {
-  let heading = row_to_string(table.headings, table.coldefs, boarder)
+pub fn table_to_string(
+  table: Table,
+  boarder: Boarder,
+  boarder_colour: fn(String) -> String,
+  bg_colour: fn(String) -> String,
+) -> String {
+  let heading =
+    row_to_string(table.headings, table.coldefs, boarder, boarder_colour)
 
   let top_boarder =
     make_boarder(
@@ -99,16 +105,18 @@ pub fn table_to_string(table: Table, boarder: Boarder) -> String {
       boarder.ud,
       boarder.lr,
     )
+    |> boarder_colour
 
   let rows =
     table.rows
-    |> list.map(row_to_string(_, table.coldefs, boarder))
+    |> list.map(row_to_string(_, table.coldefs, boarder, boarder_colour))
     |> list.prepend(heading)
 
   let horizontals =
     rows
     |> list.window_by_2
     |> list.map(make_horizontal(_, boarder))
+    |> list.map(boarder_colour)
     |> list.prepend(top_boarder)
 
   case list.last(rows) {
@@ -123,8 +131,10 @@ pub fn table_to_string(table: Table, boarder: Boarder) -> String {
           boarder.ud,
           boarder.lr,
         )
+        |> boarder_colour
       list.interleave([horizontals, rows])
       |> list.append([bottom_boarder])
+      |> list.map(bg_colour)
       |> string.join("\n")
     }
   }
@@ -173,12 +183,14 @@ fn row_to_string(
   row: List(Cell),
   coldefs: List(ColDef),
   boarder: Boarder,
+  boarder_colour: fn(String) -> String,
 ) -> String {
+  let separator = boarder.ud |> boarder_colour
   row
   |> cells_to_string([], coldefs, pad_cell_text)
-  |> list.intersperse(boarder.ud)
-  |> list.prepend(boarder.ud)
-  |> list.append([boarder.ud])
+  |> list.intersperse(separator)
+  |> list.prepend(separator)
+  |> list.append([separator])
   |> string.join(" ")
 }
 
