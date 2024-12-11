@@ -1,3 +1,5 @@
+import birl
+import gleam/bool
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
 import gleam/float
@@ -122,4 +124,16 @@ pub fn float_to_string(f: Float, percision: Int) -> String {
       |> string.drop_end(int.max(0, string.length(d) - percision))
       |> string.pad_end(percision, "0")
   }
+}
+
+pub fn timed(body: fn() -> a) -> #(Int, a) {
+  let start = birl.monotonic_now()
+  let value = body()
+  let elapsed = birl.monotonic_now() - start
+  #(elapsed, value)
+}
+
+pub fn repeat_function(a: a, function: fn(a) -> a, times: Int) -> a {
+  use <- bool.guard(times <= 0, a)
+  repeat_function(function(a), function, times - 1)
 }

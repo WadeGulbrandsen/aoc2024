@@ -3,9 +3,7 @@ import birl
 import clip
 import clip/arg
 import clip/help
-import gleam/bool
 import gleam/dict.{type Dict}
-import gleam/float
 import gleam/function
 import gleam/int
 import gleam/io
@@ -29,6 +27,7 @@ import solvers/day07
 import solvers/day08
 import solvers/day09
 import solvers/day10
+import solvers/day11
 import utils/helper
 import utils/puzzle.{type Answer, Answer}
 import utils/table
@@ -41,6 +40,7 @@ const days = [
   #(7, #(day07.solve, "Bridge Repair")),
   #(8, #(day08.solve, "Resonant Collinearity")),
   #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
+  #(11, #(day11.solve, "Plutonian Pebbles")),
 ]
 
 type Args {
@@ -89,19 +89,12 @@ fn command() {
   )
 }
 
-fn timed(body: fn() -> a) -> #(Int, a) {
-  let start = birl.monotonic_now()
-  let value = body()
-  let elapsed = birl.monotonic_now() - start
-  #(elapsed, value)
-}
-
 fn evaluate_day(
   day: Int,
   function: fn(String) -> #(Int, Int),
 ) -> Result(#(Int, #(Int, Int)), String) {
   case day |> puzzle.get_input {
-    Ok(input) -> Ok(timed(fn() { function(input) }))
+    Ok(input) -> Ok(helper.timed(fn() { function(input) }))
     Error(message) -> Error(message)
   }
 }
