@@ -7,40 +7,37 @@ import utils/grid.{type Grid, type Point}
 
 pub fn solve(data: String) -> #(Int, Int) {
   let map = grid.from_string(data, string.to_graphemes, int.parse)
-  let trailheads =
+
+  let paths =
     map.points
     |> dict.filter(fn(_, v) { v == 0 })
     |> dict.keys
+    |> list.map(fn(pos) { get_paths([[pos]], map, set.new(), set.new()) })
+    |> list.fold(set.new(), set.union)
 
   let part1 =
-    trailheads
-    |> list.map(list.wrap)
-    |> list.map(score(_, map, set.new(), set.new()))
-    |> int.sum
+    paths
+    |> set.map(fn(path) { #(list.first(path), list.last(path)) })
+    |> set.size
 
-  let part2 =
-    trailheads
-    |> list.map(fn(p) { rate([[p]], map, set.new(), set.new()) })
-    |> int.sum
-
-  #(part1, part2)
+  #(part1, set.size(paths))
 }
 
-fn rate(
+fn get_paths(
   to_check: List(List(Point)),
   map: Grid(Int),
   seen: Set(List(Point)),
   complete: Set(List(Point)),
-) -> Int {
+) -> Set(List(Point)) {
   case to_check {
-    [] -> set.size(complete)
-    [[], ..rest] -> rate(rest, map, seen, complete)
+    [] -> complete
+    [[], ..rest] -> get_paths(rest, map, seen, complete)
     [[pos, ..] as path, ..rest] -> {
       case grid.get(map, pos), set.contains(seen, path) {
         Error(_), _ | _, True ->
-          rate(rest, map, seen |> set.insert(path), complete)
+          get_paths(rest, map, seen |> set.insert(path), complete)
         Ok(9), _ ->
-          rate(
+          get_paths(
             rest,
             map,
             seen |> set.insert(path),
@@ -52,41 +49,11 @@ fn rate(
             get_next_positions(h + 1, pos, map)
             |> list.map(fn(p) { [p, ..path] })
             |> list.filter(fn(x) { !set.contains(seen, x) })
-          rate(
+          get_paths(
             next_paths |> list.append(rest) |> list.unique,
             map,
             seen,
             complete,
-          )
-        }
-      }
-    }
-  }
-}
-
-fn score(
-  to_check: List(Point),
-  map: Grid(Int),
-  seen: Set(Point),
-  nines: Set(Point),
-) -> Int {
-  case to_check {
-    [] -> set.size(nines)
-    [p, ..rest] -> {
-      case grid.get(map, p), set.contains(seen, p) {
-        Error(_), _ | _, True -> score(rest, map, seen |> set.insert(p), nines)
-        Ok(9), _ ->
-          score(rest, map, seen |> set.insert(p), nines |> set.insert(p))
-        Ok(h), _ -> {
-          let seen = seen |> set.insert(p)
-          let next_positions =
-            get_next_positions(h + 1, p, map)
-            |> list.filter(fn(x) { !set.contains(seen, x) })
-          score(
-            next_positions |> list.append(rest) |> list.unique,
-            map,
-            seen,
-            nines,
           )
         }
       }

@@ -3,7 +3,9 @@ import birl
 import clip
 import clip/arg
 import clip/help
-import gleam/dict
+import gleam/bool
+import gleam/dict.{type Dict}
+import gleam/float
 import gleam/function
 import gleam/int
 import gleam/io
@@ -32,9 +34,13 @@ import utils/puzzle.{type Answer, Answer}
 import utils/table
 
 const days = [
-  #(1, day01.solve), #(2, day02.solve), #(3, day03.solve), #(4, day04.solve),
-  #(5, day05.solve), #(6, day06.solve), #(7, day07.solve), #(8, day08.solve),
-  #(9, day09.solve), #(10, day10.solve),
+  #(1, #(day01.solve, "Historian Hysteria")),
+  #(2, #(day02.solve, "Red-Nosed Reports")),
+  #(3, #(day03.solve, "Mull It Over")), #(4, #(day04.solve, "Ceres Search")),
+  #(5, #(day05.solve, "Print Queue")), #(6, #(day06.solve, "Guard Gallivant")),
+  #(7, #(day07.solve, "Bridge Repair")),
+  #(8, #(day08.solve, "Resonant Collinearity")),
+  #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
 ]
 
 type Args {
@@ -120,17 +126,21 @@ fn result_colour(goal: Int, answer: Int) -> fn(String) -> String {
 fn print_day_result(
   result: Result(#(Int, #(Int, Int)), String),
   day: Int,
+  title: String,
 ) -> Nil {
   case result {
     Error(e) -> e |> ansi.red |> io.println_error
     Ok(#(time, #(part1, part2))) -> {
       let answers = puzzle.get_answers()
       let saved = answers |> dict.get(day) |> result.unwrap(Answer(day, 0, 0))
-      io.println(helper.unnamed_blue("Results for Day " <> int.to_string(day)))
+      io.println(
+        helper.unnamed_blue("Results for Day " <> int.to_string(day) <> ": ")
+        <> helper.faff_pink(title),
+      )
       io.println(
         "Part 1: " |> helper.aged_plastic_yellow
         <> int.to_string(part1)
-        |> string.pad_start(10, " ")
+        |> string.pad_start(20, " ")
         |> result_colour(saved.part1, part1)
         <> " "
         <> result_emoji(saved.part1, part1),
@@ -138,7 +148,7 @@ fn print_day_result(
       io.println(
         "Part 2: " |> helper.aged_plastic_yellow
         <> int.to_string(part2)
-        |> string.pad_start(10, " ")
+        |> string.pad_start(20, " ")
         |> result_colour(saved.part2, part2)
         <> " "
         <> result_emoji(saved.part2, part2),
@@ -146,7 +156,7 @@ fn print_day_result(
       io.println(
         "Time  : " |> helper.faff_pink
         <> humanise.microseconds_int(time)
-        |> string.pad_start(13, " ")
+        |> string.pad_start(23, " ")
         |> helper.faff_pink,
       )
       puzzle.update_answer(Answer(day, part1, part2), answers)
@@ -154,7 +164,10 @@ fn print_day_result(
   }
 }
 
-fn run_days(first: Int, last: Int) {
+fn run_days(
+  first: Int,
+  last: Int,
+) -> Dict(Int, #(Result(#(Int, #(Int, Int)), String), String)) {
   let filtered =
     dict.from_list(days)
     |> dict.filter(fn(d, _) { d >= first && d <= last })
@@ -169,10 +182,16 @@ fn run_days(first: Int, last: Int) {
     |> progress.map_yielder(bar, fn(bar, p) {
       bar
       |> progress.with_right_text(helper.faff_pink(
-        "] Evaluating day " <> string.pad_start(int.to_string(p.0), 2, "0"),
+        [
+          "]",
+          "Evaluating day",
+          string.pad_start(int.to_string(p.0), 2, "0") <> ":",
+          p.1.1,
+        ]
+        |> string.join(" "),
       ))
       |> progress.print_bar
-      #(p.0, evaluate_day(p.0, p.1))
+      #(p.0, #(evaluate_day(p.0, p.1.0), p.1.1))
     })
     |> yielder.to_list
     |> dict.from_list
@@ -186,34 +205,53 @@ fn run_days(first: Int, last: Int) {
 
 fn save_md() {
   let results = run_days(1, 25)
-  let headers = ["Day", "Time"] |> list.map(table.Cell(_, 1, function.identity))
+  let headers =
+    ["Day", "Title", "Time", "% Time"]
+    |> list.map(table.Cell(_, 1, function.identity))
   let coldefs = [
     5 |> table.ColDef(table.Right),
-    60 |> table.ColDef(table.Right),
+    30 |> table.ColDef(table.Left),
+    15 |> table.ColDef(table.Right),
+    15 |> table.ColDef(table.Right),
   ]
-  let rows =
-    results
-    |> dict.fold([], fn(rows, day, result) {
-      let value = case result {
-        Ok(#(time, _)) -> humanise.microseconds_int(time)
-        Error(e) -> e
-      }
-      [int.to_string(day), value]
-      |> list.map(table.Cell(_, 1, function.identity))
-      |> list.wrap
-      |> list.append(rows, _)
-    })
 
   let total_time =
     results
     |> dict.values
+    |> list.map(pair.first)
     |> result.values
     |> list.map(pair.first)
     |> int.sum
 
+  let rows =
+    results
+    |> dict.fold([], fn(rows, day, result_pair) {
+      let #(result, title) = result_pair
+      let times = case result {
+        Ok(#(time, _)) -> [
+          table.Cell(humanise.microseconds_int(time), 1, function.identity),
+          table.Cell(
+            int.to_float(time) /. int.to_float(total_time) *. 100.0
+              |> helper.float_to_string(3),
+            1,
+            function.identity,
+          ),
+        ]
+        Error(e) -> [table.Cell(e, 2, function.identity)]
+      }
+      [
+        table.Cell(int.to_string(day), 1, function.identity),
+        table.Cell(title, 1, function.identity),
+        ..times
+      ]
+      |> list.wrap
+      |> list.append(rows, _)
+    })
+
   let total_row = [
-    table.Cell("TOTAL", 1, function.identity),
+    table.Cell("TOTAL", 2, function.identity),
     table.Cell(humanise.microseconds_int(total_time), 1, function.identity),
+    table.Cell("100.000", 1, function.identity),
   ]
 
   let table =
@@ -242,14 +280,28 @@ fn save_md() {
 fn do_all_days() {
   let results = run_days(1, 25)
   let answers = puzzle.get_answers()
+  let total_time =
+    results
+    |> dict.values
+    |> list.map(pair.first)
+    |> result.values
+    |> list.map(pair.first)
+    |> int.sum
   let headers =
-    ["Day", "Part 1", "Part 2", "Time"]
+    ["Day", "Title", "Part 1", "Part 2", "Time", "% Time"]
     |> list.map(table.Cell(_, 1, helper.white))
-  let widths = [3, 25, 25, 10]
-  let coldefs = widths |> list.map(table.ColDef(_, table.Right))
+  let coldefs = [
+    table.ColDef(3, table.Right),
+    table.ColDef(25, table.Left),
+    table.ColDef(25, table.Right),
+    table.ColDef(25, table.Right),
+    table.ColDef(10, table.Right),
+    table.ColDef(10, table.Right),
+  ]
   let rows =
     results
-    |> dict.fold([], fn(rows, day, result) {
+    |> dict.fold([], fn(rows, day, result_pair) {
+      let #(result, title) = result_pair
       let row = case result {
         Ok(#(time, #(part1, part2))) -> {
           let saved =
@@ -268,34 +320,37 @@ fn do_all_days() {
               <> " ",
             result_colour(saved.part2, part2),
           )
-          [#(int.to_string(day), helper.aged_plastic_yellow), p1, p2]
-          |> list.map(fn(p) { table.Cell(p.0, 1, p.1) })
-          |> list.append([
+          [
+            table.Cell(int.to_string(day), 1, helper.aged_plastic_yellow),
+            table.Cell(title, 1, helper.unnamed_blue),
+            table.Cell(p1.0, 1, p1.1),
+            table.Cell(p2.0, 1, p2.1),
             table.Cell(
               humanise.microseconds_int(time),
               1,
               helper.aged_plastic_yellow,
             ),
-          ])
+            table.Cell(
+              int.to_float(time) /. int.to_float(total_time) *. 100.0
+                |> helper.float_to_string(3),
+              1,
+              helper.faff_pink,
+            ),
+          ]
         }
         Error(e) -> [
           table.Cell(int.to_string(day), 1, ansi.red),
-          table.Cell(e, 3, ansi.red),
+          table.Cell(title, 1, ansi.red),
+          table.Cell(e, 4, ansi.red),
         ]
       }
       list.append(rows, [row])
     })
 
-  let total_time =
-    results
-    |> dict.values
-    |> result.values
-    |> list.map(pair.first)
-    |> int.sum
-
   let total_row = [
-    table.Cell("TOTAL", 3, helper.unnamed_blue),
+    table.Cell("TOTAL", 4, helper.unnamed_blue),
     table.Cell(humanise.microseconds_int(total_time), 1, helper.unnamed_blue),
+    table.Cell("100.000", 1, helper.unnamed_blue),
   ]
 
   table.Table(headers, coldefs, list.append(rows, [total_row]))
@@ -308,27 +363,28 @@ fn do_all_days() {
 }
 
 fn do_day(day: Int) {
-  let s =
-    spinner.spinning_spinner()
-    |> spinner.with_left_text(helper.faff_pink(
-      "Evaluating day " <> int.to_string(day) <> " ",
-    ))
-    |> spinner.with_finish_text(helper.faff_pink(
-      "Done evaluating day " <> int.to_string(day) <> "\n",
-    ))
-    |> spinner.spin
+  case days |> dict.from_list |> dict.get(day) {
+    Error(_) ->
+      ansi.red("Day " <> int.to_string(day) <> " is not implemented yet.")
+      |> io.println_error
+    Ok(#(fun, title)) -> {
+      let s =
+        spinner.spinning_spinner()
+        |> spinner.with_left_text(helper.faff_pink(
+          "Evaluating day " <> int.to_string(day) <> " ",
+        ))
+        |> spinner.with_finish_text(helper.faff_pink(
+          "Done evaluating day " <> int.to_string(day) <> "\n",
+        ))
+        |> spinner.spin
 
-  let result =
-    dict.from_list(days)
-    |> dict.get(day)
-    |> result.replace_error(
-      "Day " <> int.to_string(day) <> " is not implemented yet.",
-    )
-    |> result.try(evaluate_day(day, _))
+      let result = evaluate_day(day, fun)
 
-  spinner.finish(s)
+      spinner.finish(s)
 
-  result |> print_day_result(day)
+      result |> print_day_result(day, title)
+    }
+  }
 }
 
 pub fn main() {

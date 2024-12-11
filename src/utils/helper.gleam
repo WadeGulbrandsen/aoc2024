@@ -1,5 +1,6 @@
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
+import gleam/float
 import gleam/int
 import gleam/list
 import gleam/otp/task
@@ -108,4 +109,17 @@ pub fn bg_black(s: String) -> String {
 
 pub fn bg_blacker(s: String) -> String {
   ansi.bg_hex(s, 0x151515)
+}
+
+pub fn float_to_string(f: Float, percision: Int) -> String {
+  let str = f |> float.to_precision(percision) |> float.to_string
+  case str |> string.split_once(".") {
+    Error(_) -> str
+    Ok(#(w, d)) ->
+      w
+      <> "."
+      <> d
+      |> string.drop_end(int.max(0, string.length(d) - percision))
+      |> string.pad_end(percision, "0")
+  }
 }
