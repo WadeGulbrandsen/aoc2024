@@ -1,7 +1,6 @@
 import gleam/dict
 import gleam/function
 import gleam/int
-import gleam/io
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
@@ -41,7 +40,6 @@ fn apply_rule(stone: Int) -> List(Int) {
 }
 
 pub fn solve(data: String) -> #(Int, Int) {
-  io.println_error("")
   let p1 =
     data
     |> string.split(" ")
