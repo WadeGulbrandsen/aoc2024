@@ -28,6 +28,7 @@ import solvers/day08
 import solvers/day09
 import solvers/day10
 import solvers/day11
+import solvers/day12
 import utils/helper
 import utils/puzzle.{type Answer, Answer}
 import utils/table
@@ -40,7 +41,7 @@ const days = [
   #(7, #(day07.solve, "Bridge Repair")),
   #(8, #(day08.solve, "Resonant Collinearity")),
   #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
-  #(11, #(day11.solve, "Plutonian Pebbles")),
+  #(11, #(day11.solve, "Plutonian Pebbles")), #(12, #(day12.solve, "Unknown")),
 ]
 
 type Args {
