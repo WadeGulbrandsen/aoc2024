@@ -1,141 +1,186 @@
+import gary.{type ErlangArray as Array}
+import gary/array
 import gleam/bool
-import gleam/deque.{type Deque}
+import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
+import gleam/option
+import gleam/pair
 import gleam/result
 import gleam/string
-import gleam/yielder
+import gleamy/pairing_heap.{type Heap} as heap
 
-type FileSystem {
-  Space(size: Int)
-  File(size: Int, id: Int)
+fn checksum(files: Array(Int)) -> Int {
+  files |> array.sparse_fold(0, fn(index, id, total) { index * id + total })
 }
 
-fn is_space(fs: FileSystem) -> Bool {
-  case fs {
-    Space(_) -> True
-    _ -> False
-  }
+fn parse_data(data: String) -> #(Array(Int), Dict(Int, Heap(Int))) {
+  let values =
+    data |> string.to_graphemes |> list.map(int.parse) |> result.values
+  let assert Ok(array) = array.create_fixed_size(int.sum(values), -1)
+  map_disk(values, 0, 0, array, dict.new())
 }
 
-fn disk_map(map: List(Int), acc: List(FileSystem), id: Int) -> List(FileSystem) {
-  case map {
-    [] -> acc |> list.reverse
-    [f] -> [File(f, id), ..acc] |> list.reverse
-    [f, e, ..rest] -> disk_map(rest, [Space(e), File(f, id), ..acc], id + 1)
-  }
-}
-
-fn part1(map: Deque(FileSystem)) -> Int {
-  compact(map, [], 0) |> checksum
-}
-
-fn part2(map: Deque(FileSystem)) -> Int {
-  move_files(map, []) |> checksum
-}
-
-fn move_files(map: Deque(FileSystem), end: List(FileSystem)) {
-  case deque.pop_back(map) {
-    Error(Nil) -> end
-    Ok(#(fs, rest)) -> {
-      let #(map, end) = fill_space(fs, rest, end)
-      move_files(map, end)
+fn map_disk(
+  values: List(Int),
+  id: Int,
+  index: Int,
+  files: Array(Int),
+  spaces: Dict(Int, Heap(Int)),
+) -> #(Array(Int), Dict(Int, Heap(Int))) {
+  case values {
+    [] -> #(files, spaces)
+    [file] -> #(files |> add_file(id, index, file), spaces)
+    [file, space, ..rest] -> {
+      let files = files |> add_file(id, index, file)
+      let spaces = spaces |> add_space(index + file, space)
+      map_disk(rest, id + 1, index + file + space, files, spaces)
     }
   }
 }
 
-fn fill_space(
-  fs: FileSystem,
-  map: Deque(FileSystem),
-  end: List(FileSystem),
-) -> #(Deque(FileSystem), List(FileSystem)) {
-  use <- bool.guard(is_space(fs), #(map, [fs, ..end]))
-  case get_space([], map, fs.size) {
-    Ok(#(before, space, map)) -> {
-      let before = case space > fs.size {
-        False -> [fs, ..before]
-        True -> [Space(space - fs.size), fs, ..before]
+fn add_file(files: Array(Int), id: Int, index: Int, size: Int) -> Array(Int) {
+  list.range(index, index + size - 1)
+  |> list.fold(files, fn(acc, i) {
+    let assert Ok(acc) = array.set(acc, i, id)
+    acc
+  })
+}
+
+fn del_file(files: Array(Int), index: Int, size: Int) -> Array(Int) {
+  list.range(index, index + size - 1)
+  |> list.fold(files, fn(acc, i) {
+    let assert Ok(acc) = array.drop(acc, i)
+    acc
+  })
+}
+
+fn add_space(
+  spaces: Dict(Int, Heap(Int)),
+  index: Int,
+  size: Int,
+) -> Dict(Int, Heap(Int)) {
+  use <- bool.guard(size == 0, spaces)
+  dict.upsert(spaces, size, fn(i) {
+    case i {
+      option.Some(h) -> h
+      option.None -> heap.new(int.compare)
+    }
+    |> heap.insert(index)
+  })
+}
+
+fn del_space(spaces: Dict(Int, Heap(Int)), size: Int) -> Dict(Int, Heap(Int)) {
+  use <- bool.guard(size == 0, spaces)
+  case dict.get(spaces, size) {
+    Error(_) -> spaces
+    Ok(h) ->
+      case heap.delete_min(h) {
+        Error(_) -> dict.delete(spaces, size)
+        Ok(#(_, h)) -> dict.insert(spaces, size, h)
       }
-      let map = before |> list.fold(map, deque.push_front)
-      #(map, [Space(fs.size), ..end])
+  }
+}
+
+fn part1(files: Array(Int), head: Int, tail: Int) -> Array(Int) {
+  use <- bool.guard(head >= tail, files)
+  let #(files, head, tail) = case
+    array.get(files, head) == Ok(-1),
+    array.get(files, tail)
+  {
+    False, _ -> #(files, head + 1, tail)
+    True, Error(_) -> #(files, head, tail - 1)
+    True, Ok(id) if id == -1 -> #(files, head, tail - 1)
+    True, Ok(id) -> {
+      let assert Ok(files) =
+        files |> array.set(head, id) |> result.try(array.drop(_, tail))
+      #(files, head + 1, tail - 1)
     }
-    _ -> #(map, [fs, ..end])
+  }
+  part1(files, head, tail)
+}
+
+fn part2(
+  files: Array(Int),
+  spaces: Dict(Int, Heap(Int)),
+  tail: Int,
+) -> Array(Int) {
+  case get_file(files, tail) {
+    Error(_) -> files
+    Ok(#(id, f_start, f_size)) -> {
+      let tail = f_start - 1
+      let #(files, spaces) = case get_space(spaces, f_size, f_start) {
+        Ok(#(s_start, s_size)) -> {
+          let spaces =
+            case s_size == f_size {
+              True -> spaces
+              False -> spaces |> add_space(s_start + f_size, s_size - f_size)
+            }
+            |> del_space(s_size)
+          let files =
+            files
+            |> del_file(f_start, f_size)
+            |> add_file(id, s_start, f_size)
+          #(files, spaces)
+        }
+        _ -> #(files, spaces)
+      }
+      part2(files, spaces, tail)
+    }
   }
 }
 
 fn get_space(
-  before: List(FileSystem),
-  map: Deque(FileSystem),
+  spaces: Dict(Int, Heap(Int)),
   size: Int,
-) -> Result(#(List(FileSystem), Int, Deque(FileSystem)), Nil) {
-  case deque.pop_front(map) {
-    Error(_) -> Error(Nil)
-    Ok(#(Space(x), rest)) if x >= size -> Ok(#(before, x, rest))
-    Ok(#(fs, rest)) -> get_space([fs, ..before], rest, size)
-  }
+  max_index: Int,
+) -> Result(#(Int, Int), Nil) {
+  spaces
+  |> dict.filter(fn(k, _) { k >= size })
+  |> dict.map_values(fn(_, v) { heap.find_min(v) |> result.unwrap(9001) })
+  |> dict.filter(fn(_, v) { v < max_index })
+  |> dict.to_list
+  |> list.map(pair.swap)
+  |> list.sort(fn(a, b) { int.compare(a.0, b.0) })
+  |> list.first
 }
 
-fn compact(
-  map: Deque(FileSystem),
-  compacted: List(FileSystem),
+fn get_file_r(
+  files: Array(Int),
+  id: Int,
   end: Int,
-) -> List(FileSystem) {
-  case deque.pop_front(map) {
-    Error(Nil) -> [Space(end), ..compacted] |> list.reverse
-    Ok(#(fs, rest)) -> {
-      let #(map, compacted, end) = case fs {
-        File(_, _) -> #(rest, [fs, ..compacted], end)
-        Space(0) -> #(rest, compacted, end)
-        Space(x) ->
-          case deque.pop_back(rest) {
-            Error(Nil) -> #(rest, compacted, end + x)
-            Ok(#(Space(y), rest)) -> #(
-              rest |> deque.push_front(fs),
-              compacted,
-              end + y,
-            )
-            Ok(#(File(s, i), rest)) if x < s -> #(
-              rest |> deque.push_back(File(s - x, i)),
-              [File(x, i), ..compacted],
-              end + x,
-            )
-            Ok(#(File(s, i), rest)) if x == s -> #(
-              rest,
-              [File(s, i), ..compacted],
-              end + s,
-            )
-            Ok(#(File(s, i), rest)) -> #(
-              rest |> deque.push_front(Space(x - s)),
-              [File(s, i), ..compacted],
-              end + s,
-            )
-          }
-      }
-      compact(map, compacted, end)
-    }
+  current: Int,
+) -> #(Int, Int, Int) {
+  case array.get(files, current) == Ok(id) {
+    False -> #(id, current + 1, end - current)
+    True -> get_file_r(files, id, end, current - 1)
   }
 }
 
-fn checksum(map: List(FileSystem)) -> Int {
-  map
-  |> yielder.from_list
-  |> yielder.flat_map(fn(fs) {
-    case fs {
-      Space(s) -> yielder.repeat(0) |> yielder.take(s)
-      File(s, i) -> yielder.repeat(i) |> yielder.take(s)
-    }
-  })
-  |> yielder.index
-  |> yielder.fold(0, fn(sum, p) { sum + p.0 * p.1 })
+fn get_file(files: Array(Int), tail: Int) -> Result(#(Int, Int, Int), Nil) {
+  case array.get(files, tail) {
+    Error(_) -> Error(Nil)
+    Ok(id) if id > 0 -> Ok(get_file_r(files, id, tail, tail))
+    Ok(_) -> get_file(files, tail - 1)
+  }
 }
 
 pub fn solve(data: String) -> #(Int, Int) {
-  let map =
-    data
-    |> string.to_graphemes
-    |> list.map(int.parse)
-    |> result.values
-    |> disk_map([], 0)
-    |> deque.from_list
-  #(part1(map), part2(map))
+  let #(files, spaces) = parse_data(data)
+  let tail = array.get_size(files) - 1
+  #(part1(files, 0, tail) |> checksum, part2(files, spaces, tail) |> checksum)
 }
+// fn files_debug(files: Array(Int)) -> Array(Int) {
+//   files
+//   |> array.to_list
+//   |> list.map(fn(v) {
+//     case v {
+//       -1 -> "." |> helper.unnamed_blue
+//       _ -> v % 36 |> int.to_base36 |> helper.faff_pink
+//     }
+//   })
+//   |> string.concat
+//   |> helper.bg_underwater_blue
+//   |> io.println_error
+//   files
+// }
