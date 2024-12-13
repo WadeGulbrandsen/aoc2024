@@ -1,10 +1,8 @@
 import argv
-import birl
 import clip
 import clip/arg
 import clip/help
 import gleam/dict.{type Dict}
-import gleam/float
 import gleam/function
 import gleam/int
 import gleam/io
@@ -16,7 +14,6 @@ import gleam/yielder
 import gleam_community/ansi
 import glitzer/progress
 import glitzer/spinner
-import humanise
 import simplifile
 import solvers/day01
 import solvers/day02
@@ -30,6 +27,10 @@ import solvers/day09
 import solvers/day10
 import solvers/day11
 import solvers/day12
+import solvers/day13
+import tempo.{type Duration}
+import tempo/datetime
+import tempo/duration
 import utils/helper
 import utils/puzzle.{type Answer, Answer}
 import utils/table
@@ -44,6 +45,7 @@ const days = [
   #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
   #(11, #(day11.solve, "Plutonian Pebbles")),
   #(12, #(day12.solve, "Garden Groups")),
+  #(13, #(day13.solve, "Claw Contraption")),
 ]
 
 type Args {
@@ -95,7 +97,7 @@ fn command() {
 fn evaluate_day(
   day: Int,
   function: fn(String) -> #(Int, Int),
-) -> Result(#(Int, #(Int, Int)), String) {
+) -> Result(#(Duration, #(Int, Int)), String) {
   case day |> puzzle.get_input {
     Ok(input) -> Ok(helper.timed(fn() { function(input) }))
     Error(message) -> Error(message)
@@ -120,7 +122,7 @@ fn result_colour(goal: Int, answer: Int) -> fn(String) -> String {
 }
 
 fn print_day_result(
-  result: Result(#(Int, #(Int, Int)), String),
+  result: Result(#(Duration, #(Int, Int)), String),
   day: Int,
   title: String,
 ) -> Nil {
@@ -150,8 +152,12 @@ fn print_day_result(
         <> result_emoji(saved.part2, part2),
       )
       io.println(
-        "Time  : " |> helper.faff_pink
-        <> humanise.microseconds_int(time)
+        "Time  : " |> helper.unnamed_blue
+        <> {
+          duration.as_milliseconds_fractional(time)
+          |> helper.float_to_string(3)
+          <> " ms"
+        }
         |> string.pad_start(23, " ")
         |> helper.faff_pink,
       )
@@ -163,7 +169,7 @@ fn print_day_result(
 fn run_days(
   first: Int,
   last: Int,
-) -> Dict(Int, #(Result(#(Int, #(Int, Int)), String), String)) {
+) -> Dict(Int, #(Result(#(Duration, #(Int, Int)), String), String)) {
   let filtered =
     dict.from_list(days)
     |> dict.filter(fn(d, _) { d >= first && d <= last })
@@ -217,7 +223,7 @@ fn save_md() {
     |> list.map(pair.first)
     |> result.values
     |> list.map(pair.first)
-    |> int.sum
+    |> list.fold(duration.nanoseconds(0), duration.increase)
 
   let rows =
     results
@@ -226,12 +232,15 @@ fn save_md() {
       let times = case result {
         Ok(#(time, _)) -> [
           table.Cell(
-            int.to_float(time) /. 1000.0 |> helper.float_to_string(3),
+            duration.as_milliseconds_fractional(time)
+              |> helper.float_to_string(3),
             1,
             function.identity,
           ),
           table.Cell(
-            int.to_float(time) /. int.to_float(total_time) *. 100.0
+            duration.as_milliseconds_fractional(time)
+            /. duration.as_milliseconds_fractional(total_time)
+            *. 100.0
               |> helper.float_to_string(3),
             1,
             function.identity,
@@ -251,7 +260,8 @@ fn save_md() {
   let total_row = [
     table.Cell("TOTAL", 2, function.identity),
     table.Cell(
-      int.to_float(total_time) /. 1000.0 |> helper.float_to_string(3),
+      duration.as_milliseconds_fractional(total_time)
+        |> helper.float_to_string(3),
       1,
       function.identity,
     ),
@@ -267,7 +277,7 @@ fn save_md() {
     [
       "# Run times",
       "Run at "
-        <> birl.utc_now() |> birl.to_iso8601
+        <> datetime.now_local() |> datetime.to_string
         <> " using "
         <> int.to_string(helper.get_thread_count())
         <> " threads.",
@@ -284,16 +294,19 @@ fn save_md() {
 fn do_all_days() {
   let results = run_days(1, 25)
   let answers = puzzle.get_answers()
+
   let total_time =
     results
     |> dict.values
     |> list.map(pair.first)
     |> result.values
     |> list.map(pair.first)
-    |> int.sum
+    |> list.fold(duration.nanoseconds(0), duration.increase)
+
   let headers =
     ["Day", "Title", "Part 1", "Part 2", "Time (ms)", "% Time"]
     |> list.map(table.Cell(_, 1, helper.white))
+
   let coldefs = [
     table.ColDef(3, table.Right),
     table.ColDef(25, table.Left),
@@ -302,6 +315,7 @@ fn do_all_days() {
     table.ColDef(10, table.Right),
     table.ColDef(10, table.Right),
   ]
+
   let rows =
     results
     |> dict.fold([], fn(rows, day, result_pair) {
@@ -330,12 +344,15 @@ fn do_all_days() {
             table.Cell(p1.0, 1, p1.1),
             table.Cell(p2.0, 1, p2.1),
             table.Cell(
-              int.to_float(time) /. 1000.0 |> helper.float_to_string(3),
+              duration.as_milliseconds_fractional(time)
+                |> helper.float_to_string(3),
               1,
               helper.aged_plastic_yellow,
             ),
             table.Cell(
-              int.to_float(time) /. int.to_float(total_time) *. 100.0
+              duration.as_milliseconds_fractional(time)
+              /. duration.as_milliseconds_fractional(total_time)
+              *. 100.0
                 |> helper.float_to_string(3),
               1,
               helper.faff_pink,
@@ -354,7 +371,8 @@ fn do_all_days() {
   let total_row = [
     table.Cell("TOTAL", 4, helper.unnamed_blue),
     table.Cell(
-      int.to_float(total_time) /. 1000.0 |> helper.float_to_string(3),
+      duration.as_milliseconds_fractional(total_time)
+        |> helper.float_to_string(3),
       1,
       helper.unnamed_blue,
     ),

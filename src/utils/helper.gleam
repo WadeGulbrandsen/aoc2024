@@ -1,4 +1,3 @@
-import birl
 import gleam/bool
 import gleam/dynamic.{type Dynamic}
 import gleam/erlang/atom
@@ -11,6 +10,8 @@ import gleam/result
 import gleam/string
 import gleam/yielder
 import gleam_community/ansi
+import tempo.{type Duration}
+import tempo/duration
 
 pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
   list |> yielder.from_list |> yielder.at(index)
@@ -126,10 +127,10 @@ pub fn float_to_string(f: Float, percision: Int) -> String {
   }
 }
 
-pub fn timed(body: fn() -> a) -> #(Int, a) {
-  let start = birl.monotonic_now()
+pub fn timed(body: fn() -> a) -> #(Duration, a) {
+  let start = duration.start_monotonic()
   let value = body()
-  let elapsed = birl.monotonic_now() - start
+  let elapsed = duration.stop_monotonic(start)
   #(elapsed, value)
 }
 
