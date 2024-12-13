@@ -4,6 +4,7 @@ import clip
 import clip/arg
 import clip/help
 import gleam/dict.{type Dict}
+import gleam/float
 import gleam/function
 import gleam/int
 import gleam/io
@@ -41,7 +42,8 @@ const days = [
   #(7, #(day07.solve, "Bridge Repair")),
   #(8, #(day08.solve, "Resonant Collinearity")),
   #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
-  #(11, #(day11.solve, "Plutonian Pebbles")), #(12, #(day12.solve, "Unknown")),
+  #(11, #(day11.solve, "Plutonian Pebbles")),
+  #(12, #(day12.solve, "Garden Groups")),
 ]
 
 type Args {
@@ -200,7 +202,7 @@ fn run_days(
 fn save_md() {
   let results = run_days(1, 25)
   let headers =
-    ["Day", "Title", "Time", "% Time"]
+    ["Day", "Title", "Time (ms)", "% Time"]
     |> list.map(table.Cell(_, 1, function.identity))
   let coldefs = [
     5 |> table.ColDef(table.Right),
@@ -223,7 +225,11 @@ fn save_md() {
       let #(result, title) = result_pair
       let times = case result {
         Ok(#(time, _)) -> [
-          table.Cell(humanise.microseconds_int(time), 1, function.identity),
+          table.Cell(
+            int.to_float(time) /. 1000.0 |> helper.float_to_string(3),
+            1,
+            function.identity,
+          ),
           table.Cell(
             int.to_float(time) /. int.to_float(total_time) *. 100.0
               |> helper.float_to_string(3),
@@ -244,7 +250,11 @@ fn save_md() {
 
   let total_row = [
     table.Cell("TOTAL", 2, function.identity),
-    table.Cell(humanise.microseconds_int(total_time), 1, function.identity),
+    table.Cell(
+      int.to_float(total_time) /. 1000.0 |> helper.float_to_string(3),
+      1,
+      function.identity,
+    ),
     table.Cell("100.000", 1, function.identity),
   ]
 
@@ -282,7 +292,7 @@ fn do_all_days() {
     |> list.map(pair.first)
     |> int.sum
   let headers =
-    ["Day", "Title", "Part 1", "Part 2", "Time", "% Time"]
+    ["Day", "Title", "Part 1", "Part 2", "Time (ms)", "% Time"]
     |> list.map(table.Cell(_, 1, helper.white))
   let coldefs = [
     table.ColDef(3, table.Right),
@@ -320,7 +330,7 @@ fn do_all_days() {
             table.Cell(p1.0, 1, p1.1),
             table.Cell(p2.0, 1, p2.1),
             table.Cell(
-              humanise.microseconds_int(time),
+              int.to_float(time) /. 1000.0 |> helper.float_to_string(3),
               1,
               helper.aged_plastic_yellow,
             ),
@@ -343,7 +353,11 @@ fn do_all_days() {
 
   let total_row = [
     table.Cell("TOTAL", 4, helper.unnamed_blue),
-    table.Cell(humanise.microseconds_int(total_time), 1, helper.unnamed_blue),
+    table.Cell(
+      int.to_float(total_time) /. 1000.0 |> helper.float_to_string(3),
+      1,
+      helper.unnamed_blue,
+    ),
     table.Cell("100.000", 1, helper.unnamed_blue),
   ]
 

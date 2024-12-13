@@ -2,6 +2,7 @@ import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
+import gleam/order.{type Order}
 import gleam/string
 
 pub type Point {
@@ -135,4 +136,28 @@ pub fn rotate_left(direction dir: Direction) -> Direction {
     SW -> SE
     SE -> NE
   }
+}
+
+pub fn point_compare_x(first a: Point, second b: Point) -> Order {
+  order.break_tie(int.compare(a.x, b.x), int.compare(a.y, b.y))
+}
+
+pub fn point_compare_y(first a: Point, second b: Point) -> Order {
+  order.break_tie(int.compare(a.y, b.y), int.compare(a.x, b.x))
+}
+
+pub fn is_verticle(direction d: Direction) -> Bool {
+  d == N || d == S
+}
+
+pub fn is_horizontal(direction d: Direction) -> Bool {
+  d == E || d == W
+}
+
+pub fn point_x(point p: Point) -> Int {
+  p.x
+}
+
+pub fn point_y(point p: Point) -> Int {
+  p.y
 }
