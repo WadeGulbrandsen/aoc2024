@@ -1,20 +1,21 @@
 # Run times
 
-Run at 2024-12-13T01:40:35.748-05:00 using 16 threads.
+Run at 2024-12-14T02:46:56.680-05:00 using 16 threads.
 
 |   Day | Title                          |       Time (ms) |          % Time |
 | ----: | :----------------------------- | --------------: | --------------: |
-|     1 | Historian Hysteria             |           9.421 |           0.354 |
-|     2 | Red-Nosed Reports              |           7.168 |           0.270 |
-|     3 | Mull It Over                   |           4.096 |           0.154 |
-|     4 | Ceres Search                   |          33.690 |           1.267 |
-|     5 | Print Queue                    |           8.499 |           0.320 |
-|     6 | Guard Gallivant                |        1866.854 |          70.219 |
-|     7 | Bridge Repair                  |         150.323 |           5.654 |
-|     8 | Resonant Collinearity          |           2.970 |           0.112 |
-|     9 | Disk Fragmenter                |          98.714 |           3.713 |
-|    10 | Hoof It                        |          17.203 |           0.647 |
-|    11 | Plutonian Pebbles              |          68.813 |           2.588 |
-|    12 | Garden Groups                  |         388.403 |          14.609 |
-|    13 | Claw Contraption               |           2.458 |           0.092 |
-|                                 TOTAL ||        2658.611 |         100.000 |
+|     1 | Historian Hysteria             |           9.728 |           0.255 |
+|     2 | Red-Nosed Reports              |           7.373 |           0.194 |
+|     3 | Mull It Over                   |           3.891 |           0.102 |
+|     4 | Ceres Search                   |          33.075 |           0.869 |
+|     5 | Print Queue                    |           8.499 |           0.223 |
+|     6 | Guard Gallivant                |        2039.501 |          53.559 |
+|     7 | Bridge Repair                  |         159.846 |           4.198 |
+|     8 | Resonant Collinearity          |           2.867 |           0.075 |
+|     9 | Disk Fragmenter                |         101.376 |           2.662 |
+|    10 | Hoof It                        |          17.203 |           0.452 |
+|    11 | Plutonian Pebbles              |          66.048 |           1.734 |
+|    12 | Garden Groups                  |         387.994 |          10.189 |
+|    13 | Claw Contraption               |           2.560 |           0.067 |
+|    14 | Restroom Redoubt               |         967.987 |          25.420 |
+|                                 TOTAL ||        3807.949 |         100.000 |

@@ -28,6 +28,7 @@ import solvers/day10
 import solvers/day11
 import solvers/day12
 import solvers/day13
+import solvers/day14
 import tempo.{type Duration}
 import tempo/datetime
 import tempo/duration
@@ -46,6 +47,7 @@ const days = [
   #(11, #(day11.solve, "Plutonian Pebbles")),
   #(12, #(day12.solve, "Garden Groups")),
   #(13, #(day13.solve, "Claw Contraption")),
+  #(14, #(day14.solve, "Restroom Redoubt")),
 ]
 
 type Args {
