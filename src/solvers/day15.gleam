@@ -114,7 +114,7 @@ fn map_to_char(m: Result(Warehouse, Nil)) -> String {
     Ok(BoxL) -> helper.faff_pink("[")
     Ok(BoxR) -> helper.faff_pink("]")
     Ok(Robot) -> helper.aged_plastic_yellow("@")
-    Error(_) -> "."
+    Error(_) -> " "
   }
 }
 
