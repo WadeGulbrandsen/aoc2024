@@ -1,4 +1,3 @@
-import gleam/pair
 import gleeunit/should
 import solvers/day15
 
