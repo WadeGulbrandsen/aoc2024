@@ -84,6 +84,14 @@ pub fn get(grid grid: Grid(a), point point: Point) -> Result(a, Nil) {
   dict.get(grid.points, point)
 }
 
+pub fn values(grid grid: Grid(a)) -> List(a) {
+  grid.points |> dict.values
+}
+
+pub fn points(grid grid: Grid(a)) -> List(Point) {
+  grid.points |> dict.keys
+}
+
 pub fn remove(grid grid: Grid(a), point point: Point) -> Grid(a) {
   Grid(..grid, points: grid.points |> dict.delete(point))
 }
@@ -160,4 +168,17 @@ pub fn point_x(point p: Point) -> Int {
 
 pub fn point_y(point p: Point) -> Int {
   p.y
+}
+
+pub fn to_string(
+  grid g: Grid(a),
+  to_string_fn fun: fn(Result(a, Nil)) -> String,
+) -> String {
+  list.range(0, g.height - 1)
+  |> list.map(fn(y) {
+    list.range(0, g.width - 1)
+    |> list.map(fn(x) { g |> get(Point(x, y)) |> fun })
+    |> string.concat
+  })
+  |> string.join("\n")
 }

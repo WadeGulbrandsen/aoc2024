@@ -143,7 +143,6 @@ pub fn solve(data: String) -> #(Int, Int) {
   garden.points
   |> dict.to_list
   |> get_regions(garden, [], set.new())
-  |> list.reverse
   |> list.map(fn(r) {
     let area = r.inside |> set.size
     let perimeter = r.outside |> list.length
