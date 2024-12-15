@@ -1,14 +1,18 @@
 import gleam/bool
 import gleam/dict.{type Dict}
+import gleam/erlang/process
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/pair
 import gleam/string
+import glitzer/codes
 import utils/grid.{type Direction, type Grid, type Point, E, Grid, N, S, W}
 import utils/helper
 
 const debug = False
+
+const frame_skip = 5
 
 type Warehouse {
   Wall
@@ -74,6 +78,35 @@ fn parse(data: String) -> #(Grid(Warehouse), List(Direction)) {
   #(map, moves)
 }
 
+fn dir_to_char(dir: Direction) -> String {
+  case dir {
+    N -> "^"
+    E -> ">"
+    S -> "v"
+    W -> "<"
+    _ -> " "
+  }
+}
+
+fn print_move(m: Grid(Warehouse), dir: Direction, move: Int, move_count: Int) {
+  use <- bool.guard({ move + 1 } % frame_skip != 0, Nil)
+  let direction_string = "Moving: " <> dir_to_char(dir)
+  let count_string = helper.int_to_string_with_commas(move_count)
+  let move_string =
+    move + 1
+    |> helper.int_to_string_with_commas
+    |> string.pad_start(count_string |> string.length, " ")
+  let move_status = "Move: " <> move_string <> "\n  Of: " <> count_string
+  io.println_error(
+    codes.return_home_code
+    <> direction_string |> helper.faff_pink
+    <> "\n"
+    <> move_status |> helper.aged_plastic_yellow
+    <> "\n"
+    <> grid.to_string(m, map_to_char) |> helper.bg_underwater_blue,
+  )
+}
+
 fn map_to_char(m: Result(Warehouse, Nil)) -> String {
   case m {
     Ok(Wall) -> helper.unnamed_blue("#")
@@ -96,14 +129,7 @@ fn map_debug(m: Grid(Warehouse)) -> Grid(Warehouse) {
   m
 }
 
-fn move_robot(
-  state: #(Grid(Warehouse), Point),
-  dir: Direction,
-) -> #(Grid(Warehouse), Point) {
-  push(state.0, [#(state.1, Robot)], state.1, dir)
-}
-
-fn push(
+fn push_horizontal(
   map: Grid(Warehouse),
   stack: List(#(Point, Warehouse)),
   robot: Point,
@@ -117,7 +143,7 @@ fn push(
       #(move_stack(map, stack, dir), new_robot)
     }
     Ok(Wall) -> #(map, robot)
-    Ok(item) -> push(map, [#(next, item), ..stack], robot, dir)
+    Ok(item) -> push_horizontal(map, [#(next, item), ..stack], robot, dir)
   }
 }
 
@@ -169,12 +195,15 @@ fn move_stack(
   Grid(..map, points: next_points)
 }
 
-fn wide_move_robot(
+fn move_robot(
   state: #(Grid(Warehouse), Point),
   dir: Direction,
+  move: Int,
+  move_count: Int,
+  visualize: Bool,
 ) -> #(Grid(Warehouse), Point) {
-  case dir {
-    E | W -> push(state.0, [#(state.1, Robot)], state.1, dir)
+  let state = case dir {
+    E | W -> push_horizontal(state.0, [#(state.1, Robot)], state.1, dir)
     _ ->
       push_verticle(
         state.0,
@@ -183,6 +212,9 @@ fn wide_move_robot(
         dir,
       )
   }
+  use <- bool.guard(!visualize, state)
+  print_move(state.0, dir, move, move_count)
+  state
 }
 
 fn robot_position(map: Grid(Warehouse)) -> Point {
@@ -195,27 +227,61 @@ fn gps(p: Point) -> Int {
   100 * p.y + p.x
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
   let #(map, moves) = parse(data)
+  let move_count = list.length(moves)
+
+  case visualize {
+    True -> io.print_error(codes.hide_cursor_code <> codes.clear_screen_code)
+    False -> Nil
+  }
+
   let part1 =
     moves
-    |> list.fold(#(map |> map_debug, robot_position(map)), move_robot)
+    |> list.index_fold(
+      #(map |> map_debug, robot_position(map)),
+      fn(state, direction, index) {
+        move_robot(state, direction, index, move_count, visualize)
+      },
+    )
     |> pair.first
     |> map_debug
     |> grid.filter(fn(_, m) { m |> is_box })
     |> grid.points
     |> list.map(gps)
     |> int.sum
+
+  case visualize {
+    True -> {
+      io.print_error(
+        "\nPart 1 complete: " <> helper.int_to_string_with_commas(part1),
+      )
+      process.sleep(1000)
+      io.print_error(codes.clear_screen_code)
+    }
+    False -> Nil
+  }
+
   let wide_map = expand(map) |> map_debug
   let part2 =
     moves
-    |> list.fold(#(wide_map, robot_position(wide_map)), wide_move_robot)
+    |> list.index_fold(
+      #(wide_map, robot_position(wide_map)),
+      fn(state, direction, index) {
+        move_robot(state, direction, index, move_count, visualize)
+      },
+    )
     |> pair.first
     |> map_debug
     |> grid.filter(fn(_, m) { m |> is_box })
     |> grid.points
     |> list.map(gps)
     |> int.sum
+
+  case visualize {
+    True -> io.print_error(codes.show_cursor_code)
+    False -> Nil
+  }
 
   #(part1, part2)
 }
