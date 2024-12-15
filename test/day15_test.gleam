@@ -1,3 +1,4 @@
+import gleam/pair
 import gleeunit/should
 import solvers/day15
 
@@ -14,7 +15,7 @@ pub fn solve_test() {
 
 <^^>>>vv<v>>v<<",
   )
-  |> should.equal(#(2028, 0))
+  |> should.equal(#(2028, 1751))
 
   day15.solve(
     "##########
@@ -39,5 +40,5 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^",
   )
-  |> should.equal(#(10_092, 0))
+  |> should.equal(#(10_092, 9021))
 }

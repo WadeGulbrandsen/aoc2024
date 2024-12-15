@@ -7,13 +7,14 @@
 
 I'm doing [Advent of Code 2024](https://adventofcode.com/2024) in [Gleam](https://gleam.run/).
 
+### Run time
+
+The time each day's solutions take to run are available in [Times.md](./Times.md)
+
+
 ## Puzzle input
 
 Puzzle input should be stored in the `./input` directory with file names formatted as `dayXX.txt` where XX is the two digit number of the day.
-
-## Run time
-
-The time each day's solutions take to run are available in [Times.md](./Times.md)
 
 ### Automatic download of puzzle input
 
