@@ -80,7 +80,12 @@ fn robots_debug(robots: List(Robot), width: Int, height: Int) -> List(Robot) {
   robots
 }
 
-pub fn solver(data: String, width: Int, height: Int) -> #(Int, Int) {
+pub fn solver(
+  data: String,
+  width: Int,
+  height: Int,
+  _visualize: Bool,
+) -> #(Int, Int) {
   let assert Ok(re) =
     regexp.from_string("p=(-?\\d+),(-?\\d+) v=(-?\\d+),(-?\\d+)")
   let robots =
@@ -117,6 +122,6 @@ pub fn solver(data: String, width: Int, height: Int) -> #(Int, Int) {
   #(part1, part2)
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
-  solver(data, 101, 103)
+pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
+  solver(data, 101, 103, visualize)
 }

@@ -49,7 +49,7 @@ fn part2(puzzle: Grid(String)) -> Int {
   |> list.length
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let puzzle = grid.from_string(data, string.to_graphemes, Ok)
   #(part1(puzzle), part2(puzzle))
 }

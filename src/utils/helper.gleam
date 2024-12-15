@@ -10,6 +10,7 @@ import gleam/result
 import gleam/string
 import gleam/yielder
 import gleam_community/ansi
+import glitzer/spinner
 import tempo.{type Duration}
 import tempo/duration
 
@@ -137,4 +138,21 @@ pub fn timed(body: fn() -> a) -> #(Duration, a) {
 pub fn repeat_function(a: a, function: fn(a) -> a, times: Int) -> a {
   use <- bool.guard(times <= 0, a)
   repeat_function(function(a), function, times - 1)
+}
+
+pub fn spin_it(
+  start_message s: String,
+  finish_message f: String,
+  show_spinner visualize: Bool,
+  body fun: fn() -> a,
+) -> a {
+  use <- bool.guard(!visualize, fun())
+  let spinner =
+    spinner.spinning_spinner()
+    |> spinner.with_left_text(s)
+    |> spinner.with_finish_text(f)
+    |> spinner.spin
+  let result = fun()
+  spinner.finish(spinner)
+  result
 }

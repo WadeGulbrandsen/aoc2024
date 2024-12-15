@@ -13,7 +13,6 @@ import gleam/string
 import gleam/yielder
 import gleam_community/ansi
 import glitzer/progress
-import glitzer/spinner
 import simplifile
 import solvers/day01
 import solvers/day02
@@ -100,10 +99,11 @@ fn command() {
 
 fn evaluate_day(
   day: Int,
-  function: fn(String) -> #(Int, Int),
+  function: fn(String, Bool) -> #(Int, Int),
+  visualize: Bool,
 ) -> Result(#(Duration, #(Int, Int)), String) {
   case day |> puzzle.get_input {
-    Ok(input) -> Ok(helper.timed(fn() { function(input) }))
+    Ok(input) -> Ok(helper.timed(fn() { function(input, visualize) }))
     Error(message) -> Error(message)
   }
 }
@@ -197,7 +197,7 @@ fn run_days(
         |> string.join(" "),
       ))
       |> progress.print_bar
-      #(p.0, #(evaluate_day(p.0, p.1.0), p.1.1))
+      #(p.0, #(evaluate_day(p.0, p.1.0, False), p.1.1))
     })
     |> yielder.to_list
     |> dict.from_list
@@ -398,21 +398,8 @@ fn do_day(day: Int) {
       ansi.red("Day " <> int.to_string(day) <> " is not implemented yet.")
       |> io.println_error
     Ok(#(fun, title)) -> {
-      let s =
-        spinner.spinning_spinner()
-        |> spinner.with_left_text(helper.faff_pink(
-          "Evaluating day " <> int.to_string(day) <> " ",
-        ))
-        |> spinner.with_finish_text(helper.faff_pink(
-          "Done evaluating day " <> int.to_string(day) <> "\n",
-        ))
-        |> spinner.spin
-
-      let result = evaluate_day(day, fun)
-
-      spinner.finish(s)
-
-      result |> print_day_result(day, title)
+      evaluate_day(day, fun, True)
+      |> print_day_result(day, title)
     }
   }
 }

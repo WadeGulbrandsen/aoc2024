@@ -11,6 +11,7 @@ pub fn solve_test() {
 32019012
 01329801
 10456732",
+    False,
   )
   |> should.equal(#(36, 81))
 }

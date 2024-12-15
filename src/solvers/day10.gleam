@@ -5,7 +5,7 @@ import gleam/set.{type Set}
 import gleam/string
 import utils/grid.{type Grid, type Point}
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let map = grid.from_string(data, string.to_graphemes, int.parse)
 
   let paths =

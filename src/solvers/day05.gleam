@@ -30,7 +30,7 @@ fn in_order(update: List(String), rules: Dict(String, List(String))) -> Bool {
   |> list.all(fn(p) { order(pair.first(p), pair.second(p), rules) != order.Gt })
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let assert Ok(#(rules, updates)) = string.split_once(data, "\n\n")
 
   let rules =

@@ -28,7 +28,7 @@ fn problem_dampener(levels: List(Int)) -> Bool {
   }
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let reports =
     data
     |> string.split("\n")

@@ -7,6 +7,7 @@ pub fn solve_test() {
 BBCD
 BBCC
 EEEC",
+    False,
   )
   |> should.equal(#(140, 80))
 
@@ -16,6 +17,7 @@ OXOXO
 OOOOO
 OXOXO
 OOOOO",
+    False,
   )
   |> should.equal(#(772, 436))
 
@@ -30,6 +32,7 @@ VVIIICJJEE
 MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE",
+    False,
   )
   |> should.equal(#(1930, 1206))
 
@@ -39,6 +42,7 @@ EXXXX
 EEEEE
 EXXXX
 EEEEE",
+    False,
   )
   |> should.equal(#(692, 236))
 
@@ -49,6 +53,7 @@ AAABBA
 ABBAAA
 ABBAAA
 AAAAAA",
+    False,
   )
   |> should.equal(#(1184, 368))
 }

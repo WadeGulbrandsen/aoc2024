@@ -195,7 +195,7 @@ fn gps(p: Point) -> Int {
   100 * p.y + p.x
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let #(map, moves) = parse(data)
   let part1 =
     moves

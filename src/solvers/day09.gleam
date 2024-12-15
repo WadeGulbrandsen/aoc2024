@@ -165,7 +165,7 @@ fn get_file(files: Array(Int), tail: Int) -> Result(#(Int, Int, Int), Nil) {
   }
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let #(files, spaces) = parse_data(data)
   let tail = array.get_size(files) - 1
   #(part1(files, 0, tail) |> checksum, part2(files, spaces, tail) |> checksum)

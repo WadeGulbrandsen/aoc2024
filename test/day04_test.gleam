@@ -13,6 +13,7 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX",
+    False,
   )
   |> should.equal(#(18, 9))
 }

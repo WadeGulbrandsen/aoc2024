@@ -9,6 +9,6 @@ const sample = "7 6 4 2 1
 1 3 6 7 9"
 
 pub fn solve_test() {
-  day02.solve(sample)
+  day02.solve(sample, False)
   |> should.equal(#(2, 4))
 }

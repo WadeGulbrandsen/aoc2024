@@ -13,6 +13,7 @@ pub fn solve_test() {
 ........#.
 #.........
 ......#...",
+    False,
   )
   |> should.equal(#(41, 6))
 }

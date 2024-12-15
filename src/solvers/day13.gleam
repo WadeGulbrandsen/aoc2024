@@ -66,7 +66,7 @@ fn correct_prize_location(cm: ClawMachine) -> ClawMachine {
   )
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let assert Ok(re) =
     regexp.from_string(
       "Button A: X\\+(\\d+), Y\\+(\\d+)\\nButton B: X\\+(\\d+), Y\\+(\\d+)\\nPrize: X=(\\d+), Y=(\\d+)",

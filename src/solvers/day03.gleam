@@ -31,6 +31,6 @@ pub fn part2(data: String) -> Int {
   |> int.sum
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   #(part1(data), part2(data))
 }

@@ -39,7 +39,7 @@ fn apply_rule(stone: Int) -> List(Int) {
   }
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let p1 =
     data
     |> string.split(" ")

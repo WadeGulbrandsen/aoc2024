@@ -80,7 +80,7 @@ fn part1(grid: Grid(String)) -> Int {
   |> set.size
 }
 
-pub fn solve(data: String) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
   let grid = grid.from_string(data, string.to_graphemes, grid_parser)
   #(part1(grid), part2(grid))
 }
