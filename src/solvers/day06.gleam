@@ -64,7 +64,7 @@ fn parse(data: String) -> #(Grid(Map), Point, Direction) {
   #(map, position, direction)
 }
 
-pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, visualize: helper.Visualize) -> #(Int, Int) {
   let day_string = "Day 6: " |> helper.unnamed_blue
   let parsing_string = day_string <> "Parsing data " |> helper.faff_pink
   let p1_string =
@@ -77,21 +77,32 @@ pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
     <> "Loops " |> helper.faff_pink
 
   let #(map, position, direction) =
-    helper.spin_it(parsing_string, parsing_string <> "✔️", visualize, fn() {
-      parse(data)
-    })
+    helper.spin_it(
+      parsing_string,
+      parsing_string <> "✔️",
+      visualize != helper.None,
+      fn() { parse(data) },
+    )
 
   let assert Ok(patrolled) =
-    helper.spin_it(p1_string, p1_string <> "✔️", visualize, fn() {
-      map |> patrol(position, direction, set.new(), set.new())
-    })
+    helper.spin_it(
+      p1_string,
+      p1_string <> "✔️",
+      visualize == helper.Part1 || visualize == helper.Both,
+      fn() { map |> patrol(position, direction, set.new(), set.new()) },
+    )
 
   let loops =
-    helper.spin_it(p2_string, p2_string <> "✔️", visualize, fn() {
-      patrolled
-      |> set.to_list
-      |> helper.parallel_filter(is_loop(_, map, position, direction))
-      |> list.length
-    })
+    helper.spin_it(
+      p2_string,
+      p2_string <> "✔️",
+      visualize == helper.Part2 || visualize == helper.Both,
+      fn() {
+        patrolled
+        |> set.to_list
+        |> helper.parallel_filter(is_loop(_, map, position, direction))
+        |> list.length
+      },
+    )
   #(set.size(patrolled), loops)
 }

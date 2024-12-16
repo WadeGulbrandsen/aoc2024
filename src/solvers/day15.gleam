@@ -12,7 +12,7 @@ import utils/helper
 
 const debug = False
 
-const frame_skip = 5
+const frame_skip = 10
 
 type Warehouse {
   Wall
@@ -227,11 +227,11 @@ fn gps(p: Point) -> Int {
   100 * p.y + p.x
 }
 
-pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, visualize: helper.Visualize) -> #(Int, Int) {
   let #(map, moves) = parse(data)
   let move_count = list.length(moves)
 
-  case visualize {
+  case visualize != helper.None {
     True -> io.print_error(codes.hide_cursor_code <> codes.clear_screen_code)
     False -> Nil
   }
@@ -241,7 +241,13 @@ pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
     |> list.index_fold(
       #(map |> map_debug, robot_position(map)),
       fn(state, direction, index) {
-        move_robot(state, direction, index, move_count, visualize)
+        move_robot(
+          state,
+          direction,
+          index,
+          move_count,
+          visualize == helper.Part1 || visualize == helper.Both,
+        )
       },
     )
     |> pair.first
@@ -251,7 +257,7 @@ pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
     |> list.map(gps)
     |> int.sum
 
-  case visualize {
+  case visualize == helper.Both {
     True -> {
       io.print_error(
         "\nPart 1 complete: " <> helper.int_to_string_with_commas(part1),
@@ -268,7 +274,13 @@ pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
     |> list.index_fold(
       #(wide_map, robot_position(wide_map)),
       fn(state, direction, index) {
-        move_robot(state, direction, index, move_count, visualize)
+        move_robot(
+          state,
+          direction,
+          index,
+          move_count,
+          visualize == helper.Part2 || visualize == helper.Both,
+        )
       },
     )
     |> pair.first
@@ -278,7 +290,7 @@ pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
     |> list.map(gps)
     |> int.sum
 
-  case visualize {
+  case visualize != helper.None {
     True -> io.print_error(codes.show_cursor_code)
     False -> Nil
   }

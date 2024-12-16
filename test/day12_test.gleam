@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day12
+import utils/helper
 
 pub fn solve_test() {
   day12.solve(
@@ -7,7 +8,7 @@ pub fn solve_test() {
 BBCD
 BBCC
 EEEC",
-    False,
+    helper.None,
   )
   |> should.equal(#(140, 80))
 
@@ -17,7 +18,7 @@ OXOXO
 OOOOO
 OXOXO
 OOOOO",
-    False,
+    helper.None,
   )
   |> should.equal(#(772, 436))
 
@@ -32,7 +33,7 @@ VVIIICJJEE
 MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE",
-    False,
+    helper.None,
   )
   |> should.equal(#(1930, 1206))
 
@@ -42,7 +43,7 @@ EXXXX
 EEEEE
 EXXXX
 EEEEE",
-    False,
+    helper.None,
   )
   |> should.equal(#(692, 236))
 
@@ -53,7 +54,7 @@ AAABBA
 ABBAAA
 ABBAAA
 AAAAAA",
-    False,
+    helper.None,
   )
   |> should.equal(#(1184, 368))
 }

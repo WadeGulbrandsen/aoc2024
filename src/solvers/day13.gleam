@@ -3,6 +3,7 @@ import gleam/list
 import gleam/option
 import gleam/regexp.{type Match, Match}
 import gleam/result
+import utils/helper
 
 type ClawMachine {
   ClawMachine(
@@ -66,7 +67,7 @@ fn correct_prize_location(cm: ClawMachine) -> ClawMachine {
   )
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let assert Ok(re) =
     regexp.from_string(
       "Button A: X\\+(\\d+), Y\\+(\\d+)\\nButton B: X\\+(\\d+), Y\\+(\\d+)\\nPrize: X=(\\d+), Y=(\\d+)",

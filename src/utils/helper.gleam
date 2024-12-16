@@ -14,6 +14,13 @@ import glitzer/spinner
 import tempo.{type Duration}
 import tempo/duration
 
+pub type Visualize {
+  None
+  Both
+  Part1
+  Part2
+}
+
 pub fn at_index(list list: List(a), index index: Int) -> Result(a, Nil) {
   list |> yielder.from_list |> yielder.at(index)
 }

@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day04
+import utils/helper
 
 pub fn solve_test() {
   day04.solve(
@@ -13,7 +14,7 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX",
-    False,
+    helper.None,
   )
   |> should.equal(#(18, 9))
 }

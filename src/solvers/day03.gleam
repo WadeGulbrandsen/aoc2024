@@ -5,6 +5,7 @@ import gleam/pair
 import gleam/regexp.{type Match}
 import gleam/result
 import gleam/string
+import utils/helper
 
 pub fn part1(data: String) -> Int {
   let assert Ok(re) = regexp.from_string("mul\\((\\d+),(\\d+)\\)")
@@ -31,6 +32,6 @@ pub fn part2(data: String) -> Int {
   |> int.sum
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   #(part1(data), part2(data))
 }

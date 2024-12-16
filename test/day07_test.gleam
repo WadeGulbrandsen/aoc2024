@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day07
+import utils/helper
 
 pub fn solve_test() {
   day07.solve(
@@ -12,7 +13,7 @@ pub fn solve_test() {
 192: 17 8 14
 21037: 9 7 18 13
 292: 11 6 16 20",
-    False,
+    helper.None,
   )
   |> should.equal(#(3749, 11_387))
 }

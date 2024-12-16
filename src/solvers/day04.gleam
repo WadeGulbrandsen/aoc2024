@@ -3,6 +3,7 @@ import gleam/list
 import gleam/result
 import gleam/string
 import utils/grid.{type Grid, E, N, NE, NW, S, SE, SW, W}
+import utils/helper
 
 fn part1(puzzle: Grid(String)) -> Int {
   let directions = [N, S, E, W, NE, NW, SE, SW]
@@ -49,7 +50,7 @@ fn part2(puzzle: Grid(String)) -> Int {
   |> list.length
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let puzzle = grid.from_string(data, string.to_graphemes, Ok)
   #(part1(puzzle), part2(puzzle))
 }

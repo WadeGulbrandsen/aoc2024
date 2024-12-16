@@ -2,6 +2,7 @@ import gleam/int
 import gleam/list
 import gleam/result
 import gleam/string
+import utils/helper
 
 pub fn part1(reports: List(List(Int))) -> Int {
   reports |> list.filter(is_safe) |> list.length
@@ -28,7 +29,7 @@ fn problem_dampener(levels: List(Int)) -> Bool {
   }
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let reports =
     data
     |> string.split("\n")

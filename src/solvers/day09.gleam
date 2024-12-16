@@ -9,6 +9,7 @@ import gleam/pair
 import gleam/result
 import gleam/string
 import gleamy/pairing_heap.{type Heap} as heap
+import utils/helper
 
 fn checksum(files: Array(Int)) -> Int {
   files |> array.sparse_fold(0, fn(index, id, total) { index * id + total })
@@ -165,7 +166,7 @@ fn get_file(files: Array(Int), tail: Int) -> Result(#(Int, Int, Int), Nil) {
   }
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let #(files, spaces) = parse_data(data)
   let tail = array.get_size(files) - 1
   #(part1(files, 0, tail) |> checksum, part2(files, spaces, tail) |> checksum)

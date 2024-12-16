@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day15
+import utils/helper
 
 pub fn solve_test() {
   day15.solve(
@@ -13,7 +14,7 @@ pub fn solve_test() {
 ########
 
 <^^>>>vv<v>>v<<",
-    False,
+    helper.None,
   )
   |> should.equal(#(2028, 1751))
 
@@ -39,7 +40,7 @@ vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
 <><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
 ^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
 v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^",
-    False,
+    helper.None,
   )
   |> should.equal(#(10_092, 9021))
 }

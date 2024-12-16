@@ -43,7 +43,7 @@ fn is_solveable(
   }
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let calibrations =
     data
     |> string.split("\n")

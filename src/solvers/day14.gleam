@@ -84,7 +84,7 @@ pub fn solver(
   data: String,
   width: Int,
   height: Int,
-  _visualize: Bool,
+  _visualize: helper.Visualize,
 ) -> #(Int, Int) {
   let assert Ok(re) =
     regexp.from_string("p=(-?\\d+),(-?\\d+) v=(-?\\d+),(-?\\d+)")
@@ -122,6 +122,6 @@ pub fn solver(
   #(part1, part2)
 }
 
-pub fn solve(data: String, visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, visualize: helper.Visualize) -> #(Int, Int) {
   solver(data, 101, 103, visualize)
 }

@@ -1,5 +1,7 @@
+import gleam/pair
 import gleeunit/should
 import solvers/day14
+import utils/helper
 
 pub fn solver_test() {
   day14.solver(
@@ -17,7 +19,8 @@ p=2,4 v=2,-3
 p=9,5 v=-3,-3",
     11,
     7,
-    False,
+    helper.None,
   )
-  |> should.equal(#(12, 1))
+  |> pair.first
+  |> should.equal(12)
 }

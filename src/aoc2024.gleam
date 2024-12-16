@@ -1,7 +1,9 @@
 import argv
 import clip
 import clip/arg
+import clip/flag
 import clip/help
+import clip/opt
 import gleam/dict.{type Dict}
 import gleam/function
 import gleam/int
@@ -32,7 +34,7 @@ import solvers/day15
 import tempo.{type Duration}
 import tempo/datetime
 import tempo/duration
-import utils/helper
+import utils/helper.{type Visualize, Both, None, Part1, Part2}
 import utils/puzzle.{type Answer, Answer}
 import utils/table
 
@@ -52,7 +54,7 @@ const days = [
 ]
 
 type Args {
-  Day(day: Int)
+  Day(day: Int, skip: Bool, visualize: Visualize)
   All
   SaveMD
 }
@@ -68,12 +70,38 @@ fn day() {
   })
 }
 
+fn visualize() {
+  opt.new("visualization")
+  |> opt.short("v")
+  |> opt.help(
+    "Show visualization: valid options are NONE, BOTH, PART1, or PART2",
+  )
+  |> opt.try_map(fn(v) {
+    case string.uppercase(v) {
+      "NONE" -> Ok(None)
+      "BOTH" -> Ok(Both)
+      "PART1" -> Ok(Part1)
+      "PART2" -> Ok(Part2)
+      _ -> Error("visualization must be one of: NONE, BOTH, PART1, or PART2")
+    }
+  })
+  |> opt.default(Both)
+}
+
 fn day_command() {
   clip.command({
     use day <- clip.parameter
-    Day(day)
+    use skip <- clip.parameter
+    use visualize <- clip.parameter
+    Day(day, skip, visualize)
   })
   |> clip.arg(day())
+  |> clip.flag(
+    flag.new("skip")
+    |> flag.short("s")
+    |> flag.help("Skip the results at the end"),
+  )
+  |> clip.opt(visualize())
   |> clip.help(help.simple("aoc2024 day", "Runs the specified day"))
 }
 
@@ -87,20 +115,17 @@ fn save_md_command() {
 }
 
 fn command() {
-  clip.subcommands_with_default(
-    [
-      #("day", day_command()),
-      #("all", all_command()),
-      #("save", save_md_command()),
-    ],
-    all_command(),
-  )
+  clip.subcommands([
+    #("day", day_command()),
+    #("all", all_command()),
+    #("save", save_md_command()),
+  ])
 }
 
 fn evaluate_day(
   day: Int,
-  function: fn(String, Bool) -> #(Int, Int),
-  visualize: Bool,
+  function: fn(String, Visualize) -> #(Int, Int),
+  visualize: Visualize,
 ) -> Result(#(Duration, #(Int, Int)), String) {
   case day |> puzzle.get_input {
     Ok(input) -> Ok(helper.timed(fn() { function(input, visualize) }))
@@ -197,7 +222,7 @@ fn run_days(
         |> string.join(" "),
       ))
       |> progress.print_bar
-      #(p.0, #(evaluate_day(p.0, p.1.0, False), p.1.1))
+      #(p.0, #(evaluate_day(p.0, p.1.0, None), p.1.1))
     })
     |> yielder.to_list
     |> dict.from_list
@@ -392,14 +417,17 @@ fn do_all_days() {
   |> io.println
 }
 
-fn do_day(day: Int) {
+fn do_day(day: Int, skip: Bool, visualize: Visualize) {
   case days |> dict.from_list |> dict.get(day) {
     Error(_) ->
       ansi.red("Day " <> int.to_string(day) <> " is not implemented yet.")
       |> io.println_error
     Ok(#(fun, title)) -> {
-      evaluate_day(day, fun, True)
-      |> print_day_result(day, title)
+      let results = evaluate_day(day, fun, visualize)
+      case skip {
+        True -> Nil
+        False -> print_day_result(results, day, title)
+      }
     }
   }
 }
@@ -412,7 +440,7 @@ pub fn main() {
   case result {
     Error(e) -> io.println_error(e)
     Ok(All) -> do_all_days()
-    Ok(Day(day)) -> do_day(day)
+    Ok(Day(day, skip, visualize)) -> do_day(day, skip, visualize)
     Ok(SaveMD) -> save_md()
   }
 }

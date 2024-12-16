@@ -4,6 +4,7 @@ import gleam/list
 import gleam/regexp
 import gleam/result
 import gleam/string
+import utils/helper
 
 fn get_lists(data: String) -> #(List(Int), List(Int)) {
   let assert Ok(re) = regexp.from_string("\\s+")
@@ -42,6 +43,6 @@ pub fn part2(data: String) -> Int {
   |> int.sum
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   #(part1(data), part2(data))
 }

@@ -138,7 +138,7 @@ fn get_fences(
   |> list.flatten
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let garden = grid.from_string(data, string.to_graphemes, Ok)
   garden.points
   |> dict.to_list

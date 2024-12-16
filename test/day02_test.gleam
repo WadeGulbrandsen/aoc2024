@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day02
+import utils/helper
 
 const sample = "7 6 4 2 1
 1 2 7 8 9
@@ -9,6 +10,6 @@ const sample = "7 6 4 2 1
 1 3 6 7 9"
 
 pub fn solve_test() {
-  day02.solve(sample, False)
+  day02.solve(sample, helper.None)
   |> should.equal(#(2, 4))
 }

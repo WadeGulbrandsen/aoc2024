@@ -1,5 +1,6 @@
 import gleeunit/should
 import solvers/day08
+import utils/helper
 
 pub fn solve_test() {
   day08.solve(
@@ -15,7 +16,7 @@ pub fn solve_test() {
 .........A..
 ............
 ............",
-    False,
+    helper.None,
   )
   |> should.equal(#(14, 34))
 }

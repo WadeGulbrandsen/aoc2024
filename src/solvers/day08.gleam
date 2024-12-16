@@ -4,6 +4,7 @@ import gleam/pair
 import gleam/set.{type Set}
 import gleam/string
 import utils/grid.{type Grid, type Point}
+import utils/helper
 
 fn grid_parser(grapheme: String) -> Result(String, Nil) {
   case grapheme {
@@ -80,7 +81,7 @@ fn part1(grid: Grid(String)) -> Int {
   |> set.size
 }
 
-pub fn solve(data: String, _visualize: Bool) -> #(Int, Int) {
+pub fn solve(data: String, _visualize: helper.Visualize) -> #(Int, Int) {
   let grid = grid.from_string(data, string.to_graphemes, grid_parser)
   #(part1(grid), part2(grid))
 }
