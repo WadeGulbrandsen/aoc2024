@@ -150,6 +150,19 @@ pub fn rotate_left(direction dir: Direction) -> Direction {
   }
 }
 
+pub fn reverse_direction(direction dir: Direction) -> Direction {
+  case dir {
+    N -> S
+    S -> N
+    W -> E
+    E -> W
+    NE -> SW
+    SW -> NE
+    NW -> SE
+    SE -> NW
+  }
+}
+
 pub fn point_compare_x(first a: Point, second b: Point) -> Order {
   order.break_tie(int.compare(a.x, b.x), int.compare(a.y, b.y))
 }
