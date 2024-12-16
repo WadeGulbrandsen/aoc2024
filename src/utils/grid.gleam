@@ -80,6 +80,10 @@ pub fn subtract_points(first_point a: Point, second_point b: Point) -> Point {
   Point(a.x - b.x, a.y - b.y)
 }
 
+pub fn manhatten_distance(first a: Point, second b: Point) -> Int {
+  int.absolute_value(a.x - b.x) + int.absolute_value(a.y - b.y)
+}
+
 pub fn get(grid grid: Grid(a), point point: Point) -> Result(a, Nil) {
   dict.get(grid.points, point)
 }

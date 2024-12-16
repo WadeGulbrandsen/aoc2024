@@ -4,6 +4,7 @@ import clip/arg
 import clip/flag
 import clip/help
 import clip/opt
+import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/function
 import gleam/int
@@ -16,42 +17,12 @@ import gleam/yielder
 import gleam_community/ansi
 import glitzer/progress
 import simplifile
-import solvers/day01
-import solvers/day02
-import solvers/day03
-import solvers/day04
-import solvers/day05
-import solvers/day06
-import solvers/day07
-import solvers/day08
-import solvers/day09
-import solvers/day10
-import solvers/day11
-import solvers/day12
-import solvers/day13
-import solvers/day14
-import solvers/day15
 import tempo.{type Duration}
 import tempo/datetime
 import tempo/duration
 import utils/helper.{type Visualize, Both, None, Part1, Part2}
 import utils/puzzle.{type Answer, Answer}
 import utils/table
-
-const days = [
-  #(1, #(day01.solve, "Historian Hysteria")),
-  #(2, #(day02.solve, "Red-Nosed Reports")),
-  #(3, #(day03.solve, "Mull It Over")), #(4, #(day04.solve, "Ceres Search")),
-  #(5, #(day05.solve, "Print Queue")), #(6, #(day06.solve, "Guard Gallivant")),
-  #(7, #(day07.solve, "Bridge Repair")),
-  #(8, #(day08.solve, "Resonant Collinearity")),
-  #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
-  #(11, #(day11.solve, "Plutonian Pebbles")),
-  #(12, #(day12.solve, "Garden Groups")),
-  #(13, #(day13.solve, "Claw Contraption")),
-  #(14, #(day14.solve, "Restroom Redoubt")),
-  #(15, #(day15.solve, "Warehouse Woes")),
-]
 
 type Args {
   Day(day: Int, skip: Bool, visualize: Visualize)
@@ -60,12 +31,22 @@ type Args {
 }
 
 fn day() {
+  let max_day = puzzle.max_day()
+  use <- bool.guard(
+    max_day <= 0,
+    arg.new("day")
+      |> arg.help("You're too early come back on Dec 1st, 2024")
+      |> arg.try_map(fn(_) {
+        Error("You're too early come back on Dec 1st, 2024")
+      }),
+  )
   arg.new("day")
-  |> arg.help("Which day should be run: 1-25")
+  |> arg.help("Which day should be run: 1-" <> int.to_string(max_day))
   |> arg.try_map(fn(v) {
     case int.parse(v) {
-      Ok(x) if x >= 1 && x <= 25 -> Ok(x)
-      _ -> Error("day must be a number between 1 and 25")
+      Ok(x) if x >= 1 && x <= max_day -> Ok(x)
+      _ ->
+        Error("day must be a number between 1 and " <> int.to_string(max_day))
     }
   })
 }
@@ -200,7 +181,7 @@ fn run_days(
   last: Int,
 ) -> Dict(Int, #(Result(#(Duration, #(Int, Int)), String), String)) {
   let filtered =
-    dict.from_list(days)
+    puzzle.get_days()
     |> dict.filter(fn(d, _) { d >= first && d <= last })
   let bar =
     progress.fancy_thick_bar()
@@ -418,7 +399,7 @@ fn do_all_days() {
 }
 
 fn do_day(day: Int, skip: Bool, visualize: Visualize) {
-  case days |> dict.from_list |> dict.get(day) {
+  case puzzle.get_days() |> dict.get(day) {
     Error(_) ->
       ansi.red("Day " <> int.to_string(day) <> " is not implemented yet.")
       |> io.println_error

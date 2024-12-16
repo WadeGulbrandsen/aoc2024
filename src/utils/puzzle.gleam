@@ -10,8 +10,56 @@ import gleam/list
 import gleam/result
 import gleam/string
 import simplifile
+import solvers/day01
+import solvers/day02
+import solvers/day03
+import solvers/day04
+import solvers/day05
+import solvers/day06
+import solvers/day07
+import solvers/day08
+import solvers/day09
+import solvers/day10
+import solvers/day11
+import solvers/day12
+import solvers/day13
+import solvers/day14
+import solvers/day15
+import solvers/day16
+import solvers/day17
+import solvers/day18
+import solvers/day19
+import solvers/day20
+import solvers/day21
+import solvers/day22
+import solvers/day23
+import solvers/day24
+import solvers/day25
+import tempo/date
+import tempo/datetime
+import tempo/offset
 import utils/helper
 import utils/ppjson
+
+const days = [
+  #(1, #(day01.solve, "Historian Hysteria")),
+  #(2, #(day02.solve, "Red-Nosed Reports")),
+  #(3, #(day03.solve, "Mull It Over")), #(4, #(day04.solve, "Ceres Search")),
+  #(5, #(day05.solve, "Print Queue")), #(6, #(day06.solve, "Guard Gallivant")),
+  #(7, #(day07.solve, "Bridge Repair")),
+  #(8, #(day08.solve, "Resonant Collinearity")),
+  #(9, #(day09.solve, "Disk Fragmenter")), #(10, #(day10.solve, "Hoof It")),
+  #(11, #(day11.solve, "Plutonian Pebbles")),
+  #(12, #(day12.solve, "Garden Groups")),
+  #(13, #(day13.solve, "Claw Contraption")),
+  #(14, #(day14.solve, "Restroom Redoubt")),
+  #(15, #(day15.solve, "Warehouse Woes")),
+  #(16, #(day16.solve, "Reindeer Maze")), #(17, #(day17.solve, "NOT DEFINED")),
+  #(18, #(day18.solve, "NOT DEFINED")), #(19, #(day19.solve, "NOT DEFINED")),
+  #(20, #(day20.solve, "NOT DEFINED")), #(21, #(day21.solve, "NOT DEFINED")),
+  #(22, #(day22.solve, "NOT DEFINED")), #(23, #(day23.solve, "NOT DEFINED")),
+  #(24, #(day24.solve, "NOT DEFINED")), #(25, #(day25.solve, "NOT DEFINED")),
+]
 
 const answers_path = "./input/answers.json"
 
@@ -19,6 +67,20 @@ const session_path = "./input/session.txt"
 
 pub type Answer {
   Answer(day: Int, part1: Int, part2: Int)
+}
+
+pub fn get_days() {
+  let max_day = max_day()
+  dict.from_list(days) |> dict.filter(fn(d, _) { max_day >= d })
+}
+
+pub fn max_day() -> Int {
+  let dec01 = datetime.literal("2024-12-01T00:00:00.000-05:00")
+  let dec25 = datetime.literal("2024-12-25T00:00:00.000-05:00")
+  let now = datetime.now_utc() |> datetime.to_offset(offset.literal("-05:00"))
+  use <- bool.guard(datetime.is_later(now, dec25), 25)
+  use <- bool.guard(datetime.is_earlier(now, dec01), 0)
+  now |> datetime.get_date |> date.get_day
 }
 
 fn decode_answers(json: String) -> Result(List(Answer), Nil) {
