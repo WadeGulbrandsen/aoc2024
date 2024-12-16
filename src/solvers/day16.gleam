@@ -21,7 +21,7 @@ import utils/helper
 //     - Done: 4305.484ms to 1008.417ms on Crustini VM
 //       - Borat Great Success! meme goes here
 // - Get all best paths in at once
-//   - Done: results in about the same time: 1064.186 ms
+//   - Done: 1008.417ms to 604.874ms on Crustini VM
 // - If the above doesn't work look into Parallel A*
 //   - https://cse.buffalo.edu/faculty/miller/Courses/CSE633/Weijin-Zhu-Spring-2020.pdf
 //   - https://medium.com/analytics-vidhya/parallel-a-search-on-gpu-ceb3bfe2cf51
@@ -80,8 +80,8 @@ fn all_best_paths(
 ) -> List(Path) {
   use <- bool.guard(pq.is_empty(queue), acc)
   let assert Ok(#(q, queue)) = pq.pop(queue)
-  let next = {
-    use <- bool.guard(greater_than_best(q.cost, best), [])
+  let #(found, next) = {
+    use <- bool.guard(greater_than_best(q.cost, best), #([], []))
     get_next(q)
     |> list.filter_map(fn(cost_step) {
       let #(cost, step) = cost_step
@@ -96,9 +96,20 @@ fn all_best_paths(
         _ -> Ok(Path(h, g, step, [q.head, ..q.tail]))
       }
     })
+    |> list.partition(fn(path) { path.head.point == goal })
   }
-  let acc =
-    list.filter(next, fn(path) { path.head.point == goal }) |> list.append(acc)
+
+  let #(best, acc) = {
+    use <- bool.guard(list.is_empty(found), #(best, acc))
+    let acc = found |> list.append(acc)
+    let assert Ok(low) =
+      acc |> list.map(fn(path) { path.cost }) |> list.reduce(int.min)
+    let best = Some(low)
+    let acc =
+      acc |> list.filter(fn(path) { !greater_than_best(path.cost, best) })
+    #(best, acc)
+  }
+
   let queue = next |> list.fold(queue, fn(queue, path) { pq.push(queue, path) })
   all_best_paths(
     map,
