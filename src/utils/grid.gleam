@@ -24,6 +24,11 @@ pub type Direction {
   SW
 }
 
+pub fn map_values(in grid: Grid(a), with fun: fn(Point, a) -> c) -> Grid(c) {
+  let points = grid.points |> dict.map_values(fun)
+  Grid(grid.width, grid.height, points)
+}
+
 pub fn from_string(
   data data: String,
   row_split_function row_splitter: fn(String) -> List(a),

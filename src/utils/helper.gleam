@@ -106,6 +106,46 @@ pub fn aged_plastic_yellow(s: String) -> String {
   ansi.hex(s, 0xfffbe8)
 }
 
+pub fn unexpected_aubergine(s: String) -> String {
+  ansi.hex(s, 0x584355)
+}
+
+pub fn underwater_blue(s: String) -> String {
+  ansi.hex(s, 0x292d3e)
+}
+
+pub fn charcoal(s: String) -> String {
+  ansi.hex(s, 0x2f2f2f)
+}
+
+pub fn black(s: String) -> String {
+  ansi.hex(s, 0x1e1e1e)
+}
+
+pub fn blacker(s: String) -> String {
+  ansi.hex(s, 0x151515)
+}
+
+pub fn bg_faff_pink(s: String) -> String {
+  ansi.bg_hex(s, 0xffaff3)
+}
+
+pub fn bg_white(s: String) -> String {
+  ansi.bg_hex(s, 0xfefefc)
+}
+
+pub fn bg_unnamed_blue(s: String) -> String {
+  ansi.bg_hex(s, 0xa6f0fc)
+}
+
+pub fn bg_aged_plastic_yellow(s: String) -> String {
+  ansi.bg_hex(s, 0xfffbe8)
+}
+
+pub fn bg_unexpected_aubergine(s: String) -> String {
+  ansi.bg_hex(s, 0x584355)
+}
+
 pub fn bg_underwater_blue(s: String) -> String {
   ansi.bg_hex(s, 0x292d3e)
 }

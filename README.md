@@ -11,7 +11,6 @@ I'm doing [Advent of Code 2024](https://adventofcode.com/2024) in [Gleam](https:
 
 The time each day's solutions take to run are available in [Times.md](./Times.md)
 
-
 ## Puzzle input
 
 Puzzle input should be stored in the `./input` directory with file names formatted as `dayXX.txt` where XX is the two digit number of the day.
@@ -29,3 +28,13 @@ To get the session cookie:
 1. Click `adventofcode.com` in the Name column
 1. Go to the **Cookies** tab
 1. Copy the value for the `session` cookie and paste it into `./input/session.txt`
+
+### Visualizations
+
+Captured using [asciinema](https://asciinema.org/) and converted to gif using [agg](https://docs.asciinema.org/manual/agg/)
+
+#### Day 15 Part 2
+![Visualization showing the robot moving boxes](./visualizations/day15p2.gif)
+
+#### Day 16
+![Visualization showing the paths being searched](./visualizations/day16.gif)

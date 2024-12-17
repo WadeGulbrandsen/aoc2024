@@ -2,35 +2,26 @@ import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/function
 import gleam/int
+import gleam/io
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/order
-import gleam/result
-import gleam/set
+import gleam/set.{type Set}
 import gleam/string
 import gleamy/priority_queue.{type Queue} as pq
-import utils/grid.{type Direction, type Grid, type Point, E}
+import glitzer/codes
+import utils/grid.{type Direction, type Grid, type Point, E, Grid, N, S, W}
 import utils/helper
 
-// Optimization possibilities:
-// - Improve hueristic
-//   - Check if a turn is required and add 1000 to h if so
-//     - Done: 4305.484ms to 3653.943ms on Crustini VM
-// - Combine turns with movement
-//   - This will add a 4th possiblibilty of going backwards
-//     - Done: 4305.484ms to 1008.417ms on Crustini VM
-//       - Borat Great Success! meme goes here
-// - Get all best paths in at once
-//   - Done: 1008.417ms to 604.874ms on Crustini VM
-// - If the above doesn't work look into Parallel A*
-//   - https://cse.buffalo.edu/faculty/miller/Courses/CSE633/Weijin-Zhu-Spring-2020.pdf
-//   - https://medium.com/analytics-vidhya/parallel-a-search-on-gpu-ceb3bfe2cf51
-//   - https://ojs.aaai.org/index.php/AAAI/article/view/9367/9226
+// it takes ~375k iterations of to find the paths so adjust frame skip as needed
+const frame_skip = 500
 
 type Map {
   Wall
   Start
   End
+  Seat
+  Arrow(String)
 }
 
 type Step {
@@ -77,11 +68,14 @@ fn all_best_paths(
   seen: Dict(Step, Int),
   best: Option(Int),
   acc: List(Path),
+  count: Int,
+  visualize: Bool,
 ) -> List(Path) {
   use <- bool.guard(pq.is_empty(queue), acc)
   let assert Ok(#(q, queue)) = pq.pop(queue)
   let #(found, next) = {
     use <- bool.guard(greater_than_best(q.cost, best), #([], []))
+    print_map(map, q, set.new(), count, visualize)
     get_next(q)
     |> list.filter_map(fn(cost_step) {
       let #(cost, step) = cost_step
@@ -118,39 +112,10 @@ fn all_best_paths(
     dict.insert(seen, q.head, q.cost + q.to_goal),
     best,
     acc,
+    count + 1,
+    visualize,
   )
 }
-
-// Original A* used in part 1
-//
-// fn a_star(
-//   map: Grid(Map),
-//   queue: Queue(Path),
-//   goal: Point,
-//   seen: Dict(Step, Int),
-// ) -> Result(Path, Nil) {
-//   use <- bool.guard(pq.is_empty(queue), Error(Nil))
-//   let assert Ok(#(q, queue)) = pq.pop(queue)
-//   let next =
-//     get_next(q)
-//     |> list.filter_map(fn(cost_step) {
-//       let #(cost, step) = cost_step
-//       use <- bool.guard(grid.get(map, step.point) == Ok(Wall), Error(Nil))
-//       let g = cost + q.cost
-//       let h =
-//         grid.manhatten_distance(step.point, goal)
-//         + 1000
-//         * bool.to_int(step.point.x != goal.x || step.point.y != step.point.y)
-//       case dict.get(seen, step) {
-//         Ok(x) if x < h + g -> Error(Nil)
-//         _ -> Ok(Path(h, g, step, [q.head, ..q.tail]))
-//       }
-//     })
-//   let found = list.find(next, fn(path) { path.head.point == goal })
-//   use <- bool.guard(result.is_ok(found), found)
-//   let queue = next |> list.fold(queue, fn(queue, path) { pq.push(queue, path) })
-//   a_star(map, queue, goal, dict.insert(seen, q.head, q.cost + q.to_goal))
-// }
 
 fn get_next(q: Path) -> List(#(Int, Step)) {
   [
@@ -171,21 +136,85 @@ fn path_compare(a: Path, b: Path) -> order.Order {
   int.compare(a.cost + a.to_goal, b.cost + b.to_goal)
 }
 
-pub fn solve(data: String, _visualization: helper.Visualize) -> #(Int, Int) {
+fn add_path(map: Grid(Map), path: Path) -> Grid(Map) {
+  let points =
+    [path.head, ..path.tail]
+    |> list.map(fn(step) {
+      let arrow = case step.dir {
+        N -> "^"
+        S -> "v"
+        E -> ">"
+        W -> "<"
+        _ -> " "
+      }
+      #(step.point, Arrow(arrow))
+    })
+    |> dict.from_list
+    |> dict.merge(map.points)
+  Grid(..map, points: points)
+}
+
+fn add_seats(map: Grid(Map), seats: Set(Point)) -> Grid(Map) {
+  let points =
+    seats
+    |> set.fold(dict.new(), fn(points, point) {
+      dict.insert(points, point, Seat)
+    })
+    |> dict.merge(map.points)
+  Grid(..map, points: points)
+}
+
+fn map_to_char(m: Result(Map, Nil)) -> String {
+  case m {
+    Ok(Wall) -> "#" |> helper.unnamed_blue
+    Ok(Start) -> "S" |> helper.white
+    Ok(End) -> "E" |> helper.white
+    Ok(Seat) -> "O" |> helper.aged_plastic_yellow
+    Ok(Arrow(c)) -> c |> helper.faff_pink
+    _ -> " "
+  }
+}
+
+fn print_map(
+  map: Grid(Map),
+  path: Path,
+  seats: Set(Point),
+  frame: Int,
+  visualize: Bool,
+) {
+  use <- bool.guard(!visualize || frame % frame_skip != 0, Nil)
+  let grid =
+    map
+    |> add_path(path)
+    |> add_seats(seats)
+    |> grid.to_string(map_to_char)
+    |> helper.bg_underwater_blue
+  io.print_error(codes.return_home_code <> grid)
+}
+
+pub fn solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
+  let visualization = visualization != helper.None
+  case visualization {
+    True -> io.print_error(codes.hide_cursor_code <> codes.clear_screen_code)
+    False -> Nil
+  }
   let #(map, start, end) = parse(data)
+
   let initial_path =
     Path(grid.manhatten_distance(start, end), 0, Step(E, start), [])
+
+  print_map(map, initial_path, set.new(), 0, visualization)
+
   let queue = pq.new(path_compare) |> pq.push(initial_path)
 
-  let best_paths = all_best_paths(map, queue, end, dict.new(), None, [])
+  let best_paths =
+    all_best_paths(map, queue, end, dict.new(), None, [], 0, visualization)
 
-  let part1 =
-    best_paths
-    |> list.first
-    |> result.map(fn(path) { path.cost })
-    |> result.unwrap(0)
+  let assert Ok(best_path) = best_paths |> list.first
 
-  let part2 =
+  print_map(map, best_path, set.new(), 0, visualization)
+
+  let seats =
     best_paths
     |> list.fold(set.new(), fn(s, path) {
       [path.head, ..path.tail]
@@ -193,7 +222,13 @@ pub fn solve(data: String, _visualization: helper.Visualize) -> #(Int, Int) {
       |> set.from_list
       |> set.union(s)
     })
-    |> set.size
 
-  #(part1, part2)
+  print_map(map, best_path, seats, 0, visualization)
+
+  case visualization {
+    True -> io.println_error(codes.show_cursor_code)
+    False -> Nil
+  }
+
+  #(best_path.cost, seats |> set.size)
 }
