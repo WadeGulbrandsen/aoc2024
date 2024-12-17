@@ -19,7 +19,7 @@ pub fn solve1_test() {
 #.###.#.#.#.#.#
 #S..#.....#...#
 ###############",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(7036, 45))
 }
@@ -43,7 +43,7 @@ pub fn solve2_test() {
 #.#.#.#########.#
 #S#.............#
 #################",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(11_048, 64))
 }
