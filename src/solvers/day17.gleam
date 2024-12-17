@@ -74,26 +74,28 @@ fn init(data: String) -> #(Computer, List(Int)) {
 fn exec(computer: Computer) -> List(Int) {
   let op = dict.get(computer.program, computer.ip) |> get_op
   let operand = dict.get(computer.program, computer.ip + 1)
+
   // io.debug(#(computer, op, operand))
   use <- bool.guard(
     op == INVALID || operand |> result.is_error,
     computer.output |> list.reverse,
   )
   let assert Ok(operand) = operand
+  let combo = get_combo(operand, computer)
   let computer = case op {
-    Adv -> Computer(..computer, a: div(operand, computer), ip: computer.ip + 2)
+    Adv ->
+      Computer(
+        ..computer,
+        a: int.bitwise_shift_right(computer.a, combo),
+        ip: computer.ip + 2,
+      )
     Bxl ->
       Computer(
         ..computer,
         b: computer.b |> int.bitwise_exclusive_or(operand),
         ip: computer.ip + 2,
       )
-    Bst ->
-      Computer(
-        ..computer,
-        b: get_combo(operand, computer) % 8,
-        ip: computer.ip + 2,
-      )
+    Bst -> Computer(..computer, b: combo % 8, ip: computer.ip + 2)
     Jnz if computer.a != 0 -> Computer(..computer, ip: operand)
     Bxc ->
       Computer(
@@ -104,21 +106,24 @@ fn exec(computer: Computer) -> List(Int) {
     Out ->
       Computer(
         ..computer,
-        output: [get_combo(operand, computer) % 8, ..computer.output],
+        output: [combo % 8, ..computer.output],
         ip: computer.ip + 2,
       )
-    Bdv -> Computer(..computer, b: div(operand, computer), ip: computer.ip + 2)
-    Cdv -> Computer(..computer, c: div(operand, computer), ip: computer.ip + 2)
+    Bdv ->
+      Computer(
+        ..computer,
+        b: int.bitwise_shift_right(computer.a, combo),
+        ip: computer.ip + 2,
+      )
+    Cdv ->
+      Computer(
+        ..computer,
+        c: int.bitwise_shift_right(computer.a, combo),
+        ip: computer.ip + 2,
+      )
     _ -> Computer(..computer, ip: computer.ip + 2)
   }
   exec(computer)
-}
-
-fn div(operand: Int, computer: Computer) -> Int {
-  let exp = get_combo(operand, computer)
-  use <- bool.guard(exp < 1, computer.a)
-  let denominator = 2 |> int.bitwise_shift_left(exp - 1)
-  computer.a / denominator
 }
 
 fn get_combo(operand: Int, computer: Computer) -> Int {
