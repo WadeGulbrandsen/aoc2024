@@ -13,6 +13,8 @@ import utils/grid.{
 }
 import utils/helper
 
+const frame_skip = 50
+
 type Map {
   Wall
   Start
@@ -38,14 +40,47 @@ fn map_to_char(m: Result(Map, Nil)) -> String {
   }
 }
 
-fn debug_map(map: Grid(Map)) -> Grid(Map) {
-  io.println_error(
-    codes.return_home_code
-    <> "\n"
-    <> grid.to_string(map, map_to_char) |> helper.bg_underwater_blue,
-  )
-  map
+fn add_path(map: Grid(Map), path: Path) -> Grid(Map) {
+  let points =
+    [path.head, ..path.tail]
+    |> list.map(fn(step) {
+      let arrow = case step.dir {
+        N -> "^"
+        S -> "v"
+        E -> ">"
+        W -> "<"
+        _ -> " "
+      }
+      #(step.point, Arrow(arrow))
+    })
+    |> dict.from_list
+    |> dict.merge(map.points)
+  Grid(..map, points: points)
 }
+
+fn print_map(map: Grid(Map), path: Path, frame: Int, visualize: Bool) {
+  use <- bool.guard(!visualize || frame % frame_skip != 0, Nil)
+  let grid =
+    map
+    |> add_path(path)
+    |> grid.to_string(map_to_char)
+    |> helper.bg_underwater_blue
+  io.print_error(
+    codes.return_home_code
+    <> int.to_string(frame) |> helper.faff_pink
+    <> "\n\n"
+    <> grid,
+  )
+}
+
+// fn debug_map(map: Grid(Map)) -> Grid(Map) {
+//   io.println_error(
+//     codes.return_home_code
+//     <> "\n"
+//     <> grid.to_string(map, map_to_char) |> helper.bg_underwater_blue,
+//   )
+//   map
+// }
 
 pub fn test_solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
   do_solve(data, 6, 6, 12, visualization)
@@ -60,9 +95,12 @@ fn a_star(
   queue: Queue(Path),
   goal: Point,
   seen: Dict(Step, Int),
+  frame: Int,
+  visualize: Bool,
 ) -> Result(Path, Nil) {
   use <- bool.guard(pq.is_empty(queue), Error(Nil))
   let assert Ok(#(q, queue)) = pq.pop(queue)
+  print_map(map, q, frame, visualize)
   let next =
     get_next(q.head.point, map)
     |> list.filter_map(fn(cost_step) {
@@ -77,14 +115,21 @@ fn a_star(
   let found = list.find(next, fn(path) { path.head.point == goal })
   use <- bool.guard(result.is_ok(found), found)
   let queue = next |> list.fold(queue, fn(queue, path) { pq.push(queue, path) })
-  a_star(map, queue, goal, dict.insert(seen, q.head, q.cost))
+  a_star(
+    map,
+    queue,
+    goal,
+    dict.insert(seen, q.head, q.cost),
+    frame + 1,
+    visualize,
+  )
 }
 
 fn get_next(point: Point, map: Grid(Map)) -> List(#(Int, Step)) {
   [N, E, S, W]
   |> list.filter_map(fn(dir) {
     let point = grid.move(point, dir, 1)
-    case grid.in_bounds(map, point) && grid.get(map, point) != Error(Nil) {
+    case grid.in_bounds(map, point) && grid.get(map, point) != Ok(Wall) {
       True -> Ok(#(1, Step(dir, point)))
       False -> Error(Nil)
     }
@@ -99,10 +144,11 @@ fn find_shortest_path(
   map: Grid(Map),
   start: Point,
   end: Point,
+  visualize: Bool,
 ) -> Result(Path, Nil) {
   let path = Path(grid.manhatten_distance(start, end), 0, Step(E, start), [])
   let queue = pq.new(path_compare) |> pq.push(path)
-  a_star(map, queue, end, dict.new())
+  a_star(map, queue, end, dict.new(), 0, visualize)
 }
 
 fn do_solve(
@@ -110,9 +156,13 @@ fn do_solve(
   max_x: Int,
   max_y: Int,
   fallen: Int,
-  _visualization: helper.Visualize,
+  visualization: helper.Visualize,
 ) -> #(Int, Int) {
-  io.println_error(codes.clear_screen_code <> codes.hide_cursor_code)
+  case visualization != helper.None {
+    True -> io.println_error(codes.clear_screen_code <> codes.hide_cursor_code)
+    False -> Nil
+  }
+
   let points =
     data
     |> string.split("\n")
@@ -127,8 +177,10 @@ fn do_solve(
       })
     })
     |> result.values
+
   let start = Point(0, 0)
   let end = Point(max_x, max_y)
+
   let part1 =
     points
     |> list.take(fallen)
@@ -137,11 +189,18 @@ fn do_solve(
     |> list.prepend(#(end, End))
     |> dict.from_list
     |> Grid(max_x + 1, max_y + 1, _)
-    |> debug_map
-    |> find_shortest_path(start, end)
-    |> io.debug
+    |> find_shortest_path(
+      start,
+      end,
+      visualization == helper.Both || visualization == helper.Part1,
+    )
     |> result.map(fn(path) { path.cost })
     |> result.unwrap(0)
-  io.println_error(codes.show_cursor_code)
+
+  case visualization != helper.None {
+    True -> io.println_error(codes.show_cursor_code)
+    False -> Nil
+  }
+
   #(part1, 0)
 }
