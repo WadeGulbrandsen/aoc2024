@@ -3,6 +3,18 @@ import solvers/day19
 import utils/helper
 
 pub fn solve_test() {
-  day19.solve("", helper.Both)
-  |> should.equal(#(0, 0))
+  day19.solve(
+    "r, wr, b, g, bwu, rb, gb, br
+
+brwrr
+bggr
+gbbr
+rrbgbr
+ubwu
+bwurrg
+brgr
+bbrgwb",
+    helper.Both,
+  )
+  |> should.equal(#(6, 0))
 }
