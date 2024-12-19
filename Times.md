@@ -1,23 +1,25 @@
 # Run times
 
-Run at 2024-12-16T20:48:46.262-05:00 using 16 threads.
+Run at 2024-12-18T22:27:19.566-05:00 using 16 threads.
 
 |   Day | Title                          |       Time (ms) |          % Time |
 | ----: | :----------------------------- | --------------: | --------------: |
-|     1 | Historian Hysteria             |          13.414 |           0.193 |
-|     2 | Red-Nosed Reports              |          10.240 |           0.147 |
-|     3 | Mull It Over                   |           5.325 |           0.077 |
-|     4 | Ceres Search                   |          48.947 |           0.703 |
-|     5 | Print Queue                    |          10.547 |           0.152 |
-|     6 | Guard Gallivant                |        3619.123 |          52.007 |
-|     7 | Bridge Repair                  |         267.776 |           3.848 |
-|     8 | Resonant Collinearity          |           3.686 |           0.053 |
-|     9 | Disk Fragmenter                |         134.246 |           1.929 |
-|    10 | Hoof It                        |          22.938 |           0.330 |
-|    11 | Plutonian Pebbles              |          94.208 |           1.354 |
-|    12 | Garden Groups                  |         471.654 |           6.778 |
-|    13 | Claw Contraption               |           3.072 |           0.044 |
-|    14 | Restroom Redoubt               |        1164.186 |          16.729 |
-|    15 | Warehouse Woes                 |          52.941 |           0.761 |
-|    16 | Reindeer Maze                  |        1036.595 |          14.896 |
-|                                 TOTAL ||        6958.899 |         100.000 |
+|     1 | Historian Hysteria             |           9.728 |           0.171 |
+|     2 | Red-Nosed Reports              |           7.680 |           0.135 |
+|     3 | Mull It Over                   |           3.584 |           0.063 |
+|     4 | Ceres Search                   |          34.202 |           0.601 |
+|     5 | Print Queue                    |           8.704 |           0.153 |
+|     6 | Guard Gallivant                |        2329.907 |          40.967 |
+|     7 | Bridge Repair                  |         147.661 |           2.596 |
+|     8 | Resonant Collinearity          |           3.072 |           0.054 |
+|     9 | Disk Fragmenter                |         105.574 |           1.856 |
+|    10 | Hoof It                        |          19.763 |           0.347 |
+|    11 | Plutonian Pebbles              |          78.438 |           1.379 |
+|    12 | Garden Groups                  |         411.136 |           7.229 |
+|    13 | Claw Contraption               |           2.970 |           0.052 |
+|    14 | Restroom Redoubt               |         993.690 |          17.472 |
+|    15 | Warehouse Woes                 |          46.490 |           0.817 |
+|    16 | Reindeer Maze                  |         907.059 |          15.949 |
+|    17 | Chronospatial Computer         |           1.434 |           0.025 |
+|    18 | RAM Run                        |         576.205 |          10.131 |
+|                                 TOTAL ||        5687.296 |         100.000 |

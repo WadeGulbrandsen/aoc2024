@@ -13,7 +13,7 @@ import utils/grid.{
 }
 import utils/helper
 
-const frame_skip = 50
+const frame_skip = 1000
 
 type Map {
   Wall
@@ -36,7 +36,7 @@ fn map_to_char(m: Result(Map, Nil)) -> String {
     Ok(Start) -> "S" |> helper.white
     Ok(End) -> "E" |> helper.white
     Ok(Arrow(c)) -> c |> helper.faff_pink
-    _ -> " "
+    _ -> "." |> helper.aged_plastic_yellow
   }
 }
 
@@ -65,22 +65,8 @@ fn print_map(map: Grid(Map), path: Path, frame: Int, visualize: Bool) {
     |> add_path(path)
     |> grid.to_string(map_to_char)
     |> helper.bg_underwater_blue
-  io.print_error(
-    codes.return_home_code
-    <> int.to_string(frame) |> helper.faff_pink
-    <> "\n\n"
-    <> grid,
-  )
+  io.print_error(codes.return_home_code <> grid)
 }
-
-// fn debug_map(map: Grid(Map)) -> Grid(Map) {
-//   io.println_error(
-//     codes.return_home_code
-//     <> "\n"
-//     <> grid.to_string(map, map_to_char) |> helper.bg_underwater_blue,
-//   )
-//   map
-// }
 
 pub fn test_solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
   do_solve(data, 6, 6, 12, visualization)
@@ -113,7 +99,10 @@ fn a_star(
       }
     })
   let found = list.find(next, fn(path) { path.head.point == goal })
-  use <- bool.guard(result.is_ok(found), found)
+  use <- bool.lazy_guard(result.is_ok(found), fn() {
+    print_map(map, q, 0, visualize)
+    found
+  })
   let queue = next |> list.fold(queue, fn(queue, path) { pq.push(queue, path) })
   a_star(
     map,
@@ -151,6 +140,44 @@ fn find_shortest_path(
   a_star(map, queue, end, dict.new(), 0, visualize)
 }
 
+fn find_first_blocker(
+  map: Grid(Map),
+  start: Point,
+  end: Point,
+  to_fall: List(Point),
+  shortest_path: Path,
+  visualize: Bool,
+) -> Point {
+  case to_fall {
+    [] -> start
+    [p, ..rest] -> {
+      let assert Ok(map) = map |> grid.insert(p, Wall)
+      let new_path = case on_path(shortest_path, p) {
+        False -> Ok(shortest_path)
+        True -> find_shortest_path(map, start, end, visualize)
+      }
+      case new_path {
+        Error(_) -> {
+          print_map(
+            map,
+            Path(grid.manhatten_distance(start, end), 0, Step(E, start), []),
+            0,
+            visualize,
+          )
+          p
+        }
+        Ok(path) -> find_first_blocker(map, start, end, rest, path, visualize)
+      }
+    }
+  }
+}
+
+fn on_path(path: Path, point: Point) -> Bool {
+  [path.head, ..path.tail]
+  |> list.map(fn(s) { s.point })
+  |> list.any(fn(p) { p == point })
+}
+
 fn do_solve(
   data: String,
   max_x: Int,
@@ -181,26 +208,59 @@ fn do_solve(
   let start = Point(0, 0)
   let end = Point(max_x, max_y)
 
-  let part1 =
-    points
-    |> list.take(fallen)
+  let #(fallen, to_fall) = list.split(points, fallen)
+
+  let map =
+    fallen
     |> list.map(fn(p) { #(p, Wall) })
     |> list.prepend(#(start, Start))
     |> list.prepend(#(end, End))
     |> dict.from_list
     |> Grid(max_x + 1, max_y + 1, _)
-    |> find_shortest_path(
+
+  let assert Ok(shortest_path) =
+    find_shortest_path(
+      map,
       start,
       end,
       visualization == helper.Both || visualization == helper.Part1,
     )
-    |> result.map(fn(path) { path.cost })
-    |> result.unwrap(0)
+
+  let blocker =
+    find_first_blocker(
+      map,
+      start,
+      end,
+      to_fall,
+      shortest_path,
+      visualization == helper.Both || visualization == helper.Part2,
+    )
+
+  case visualization == helper.Both {
+    True ->
+      io.println_error(
+        "\n"
+        <> "Part 2: " |> helper.faff_pink
+        <> [blocker.x, blocker.y]
+        |> list.map(int.to_string)
+        |> string.join(",")
+        |> helper.unnamed_blue,
+      )
+    False -> Nil
+  }
 
   case visualization != helper.None {
     True -> io.println_error(codes.show_cursor_code)
     False -> Nil
   }
 
-  #(part1, 0)
+  let part2 =
+    [blocker.x, blocker.y]
+    |> list.map(int.digits(_, 10))
+    |> result.values
+    |> list.flatten
+    |> int.undigits(10)
+    |> result.unwrap(0)
+
+  #(shortest_path.cost, part2)
 }

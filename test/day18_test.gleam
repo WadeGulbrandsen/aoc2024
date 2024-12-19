@@ -29,7 +29,7 @@ pub fn solve_test() {
 0,5
 1,6
 2,0",
-    helper.Both,
+    helper.None,
   )
-  |> should.equal(#(22, 0))
+  |> should.equal(#(22, 61))
 }
