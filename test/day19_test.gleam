@@ -16,5 +16,5 @@ brgr
 bbrgwb",
     helper.Both,
   )
-  |> should.equal(#(6, 0))
+  |> should.equal(#(6, 16))
 }

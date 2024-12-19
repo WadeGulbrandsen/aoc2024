@@ -1,5 +1,8 @@
+import gleam/bool
+import gleam/int
 import gleam/list
 import gleam/string
+import rememo/memo
 import utils/helper
 
 fn is_possible(
@@ -25,10 +28,32 @@ fn is_possible(
   }
 }
 
+fn all_combinations(display: String, towels: List(String), cache) -> Int {
+  use <- memo.memoize(cache, display)
+  use <- bool.guard(string.is_empty(display), 1)
+  towels
+  |> list.filter_map(fn(towel) {
+    case display |> string.starts_with(towel) {
+      False -> Error(Nil)
+      True ->
+        Ok(all_combinations(
+          display |> string.drop_start(string.length(towel)),
+          towels,
+          cache,
+        ))
+    }
+  })
+  |> int.sum
+}
+
 pub fn solve(data: String, _visualization: helper.Visualize) -> #(Int, Int) {
   let assert Ok(#(towels, displays)) = string.split_once(data, "\n\n")
   let towels = towels |> string.split(", ")
   let displays = displays |> string.split("\n")
-  let possible = displays |> list.filter(is_possible(_, towels, towels))
-  #(list.length(possible), 0)
+  let possible =
+    displays |> helper.parallel_filter(is_possible(_, towels, towels))
+  use cache <- memo.create()
+  let all_combinations =
+    possible |> list.map(all_combinations(_, towels, cache))
+  #(list.length(possible), all_combinations |> int.sum)
 }
