@@ -1,5 +1,6 @@
+import gary.{type ErlangArray as Array}
+import gary/array
 import gleam/bool
-import gleam/dict.{type Dict}
 import gleam/int
 import gleam/io
 import gleam/list
@@ -14,7 +15,7 @@ type Computer {
     b: Int,
     c: Int,
     ip: Int,
-    program: Dict(Int, Int),
+    program: Array(Int),
     output: List(Int),
   )
 }
@@ -31,21 +32,21 @@ type Op {
   INVALID
 }
 
-fn get_op(opcode: Result(Int, Nil)) -> Op {
+fn get_op(opcode: Int) -> Op {
   case opcode {
-    Ok(0) -> Adv
-    Ok(1) -> Bxl
-    Ok(2) -> Bst
-    Ok(3) -> Jnz
-    Ok(4) -> Bxc
-    Ok(5) -> Out
-    Ok(6) -> Bdv
-    Ok(7) -> Cdv
+    0 -> Adv
+    1 -> Bxl
+    2 -> Bst
+    3 -> Jnz
+    4 -> Bxc
+    5 -> Out
+    6 -> Bdv
+    7 -> Cdv
     _ -> INVALID
   }
 }
 
-fn init(data: String) -> #(Computer, List(Int)) {
+fn init(data: String) -> Computer {
   let assert Ok(#(registers, program)) = data |> string.split_once("\n\n")
   let assert [a, b, c] =
     registers
@@ -65,17 +66,16 @@ fn init(data: String) -> #(Computer, List(Int)) {
     |> result.unwrap([])
     |> list.map(int.parse)
     |> result.values
-  let stack =
-    program
-    |> list.index_fold(dict.new(), fn(d, v, k) { dict.insert(d, k, v) })
-  #(Computer(a, b, c, 0, stack, []), program)
+    |> array.from_list(-1)
+    |> array.make_fixed
+  Computer(a, b, c, 0, program, [])
 }
 
 fn exec(computer: Computer) -> List(Int) {
-  let op = dict.get(computer.program, computer.ip) |> get_op
-  let operand = dict.get(computer.program, computer.ip + 1)
+  let op =
+    array.get(computer.program, computer.ip) |> result.unwrap(-1) |> get_op
+  let operand = array.get(computer.program, computer.ip + 1)
 
-  // io.debug(#(computer, op, operand))
   use <- bool.guard(
     op == INVALID || operand |> result.is_error,
     computer.output |> list.reverse,
@@ -135,13 +135,88 @@ fn get_combo(operand: Int, computer: Computer) -> Int {
   }
 }
 
-pub fn solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
-  let #(computer, _program) = init(data)
+fn find_quines(
+  program: Array(Int),
+  length: Int,
+  short_program: Array(Int),
+  to_check: List(#(Int, Int)),
+  quines: List(Int),
+) -> List(Int) {
+  case to_check {
+    [] -> quines
+    [#(q, r), ..rest] -> {
+      let #(to_check, quines) = case q < length {
+        True -> {
+          let digit = array.get(program, length - q) |> result.unwrap(-1)
+          let next =
+            list.range(0, 7)
+            |> list.filter_map(fn(a) {
+              let n = int.bitwise_shift_left(r, 3) + a
+              let v = Computer(n, 0, 0, 0, short_program, []) |> exec
+              case v == [digit] {
+                True -> {
+                  Ok(#(q + 1, n))
+                }
+                False -> Error(Nil)
+              }
+            })
+          #(list.append(rest, next), quines)
+        }
+        False ->
+          case
+            Computer(r, 0, 0, 0, program, []) |> exec
+            == program |> array.to_list
+          {
+            True -> #(to_check, [r, ..quines])
+            False -> #(to_check, quines)
+          }
+      }
+      find_quines(program, length, short_program, to_check, quines)
+    }
+  }
+}
+
+fn reverse_engineer(
+  rev_program: List(Int),
+  to_check: List(Int),
+  runner: fn(Int) -> List(Int),
+) -> Int {
+  case rev_program {
+    [] -> list.reduce(to_check, int.min) |> result.unwrap(0)
+    [digit, ..rest] -> {
+      let next =
+        to_check
+        |> list.flat_map(fn(a) {
+          let shifted = int.bitwise_shift_left(a, 3)
+          list.range(shifted, shifted + 7)
+          |> list.filter_map(fn(a) {
+            let output = runner(a)
+            case list.first(output) {
+              Ok(x) if x == digit -> Ok(a)
+              _ -> Error(Nil)
+            }
+          })
+        })
+      reverse_engineer(rest, next, runner)
+    }
+  }
+}
+
+fn part2(computer: Computer) -> Int {
+  let program = computer.program |> array.to_list
+  let length = array.get_size(computer.program)
+  let #(_beginning, last) = list.split(program, length - 2)
+  use <- bool.guard(last != [3, 0], 0)
+  let runner = fn(a) { exec(Computer(a, 0, 0, 0, computer.program, [])) }
+  reverse_engineer(program |> list.reverse, [0], runner)
+}
+
+fn part1(computer: Computer, visualization: helper.Visualize) -> Int {
   let output = computer |> exec
   case visualization {
     helper.Both | helper.Part1 ->
       io.println_error(
-        "Part 1: " |> helper.unnamed_blue
+        "Part 1 with commas: " |> helper.unnamed_blue
         <> output
         |> list.map(int.to_string)
         |> string.join(",")
@@ -150,6 +225,10 @@ pub fn solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
     _ -> Nil
   }
   let assert Ok(part1) = output |> int.undigits(10)
+  part1
+}
 
-  #(part1, 0)
+pub fn solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
+  let computer = init(data)
+  #(part1(computer, visualization), part2(computer))
 }

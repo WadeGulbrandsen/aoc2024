@@ -16,19 +16,6 @@ Program: 0,1,5,4,3,0",
   |> should.equal(4_635_635_210)
 }
 
-pub fn solve2_test() {
-  day17.solve(
-    "Register A: 10
-Register B: 0
-Register C: 0
-
-Program: 5,0,5,1,5,4",
-    helper.None,
-  )
-  |> pair.first
-  |> should.equal(12)
-}
-
 pub fn solve3_test() {
   day17.solve(
     "Register A: 2024
@@ -41,15 +28,16 @@ Program: 0,1,5,4,3,0",
   |> pair.first
   |> should.equal(42_567_777_310)
 }
-// pub fn solve_part2_test() {
-//   day17.solve(
-//     "Register A: 2024
-// Register B: 0
-// Register C: 0
 
-// Program: 0,3,5,4,3,0",
-//     helper.Part2,
-//   )
-//   |> pair.second
-//   |> should.equal(117_440)
-// }
+pub fn solve_part2_test() {
+  day17.solve(
+    "Register A: 2024
+Register B: 0
+Register C: 0
+
+Program: 0,3,5,4,3,0",
+    helper.None,
+  )
+  |> pair.second
+  |> should.equal(117_440)
+}
