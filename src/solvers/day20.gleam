@@ -4,14 +4,13 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option}
 import gleam/order.{type Order}
-import gleam/pair
 import gleam/result
 import gleam/string
 import gleam/yielder
 import gleamy/non_empty_list.{type NonEmptyList} as nel
 import gleamy/priority_queue.{type Queue} as pq
 import glitzer/progress.{type ProgressStyle}
-import utils/grid.{type Grid, type Point, E, Grid, N, S, W}
+import utils/grid.{type Grid, type Point, E, Grid, N, Point, S, W}
 import utils/helper
 
 type Map {
@@ -86,11 +85,12 @@ fn get_start_end(map: Grid(Map)) -> #(Point, Point) {
   #(start, end)
 }
 
-fn good_hacks(
+fn wall_hacks(
   to_hack: List(#(Step, Int)),
   good: Int,
-  p1_dist: Int,
-  p2_dist: Int,
+  step_costs: Dict(Step, Int),
+  p1_mask: List(Point),
+  p2_mask: List(Point),
   p1_good: Dict(#(Step, Step), Int),
   p2_good: Dict(#(Step, Step), Int),
   bar: Option(ProgressStyle),
@@ -99,23 +99,21 @@ fn good_hacks(
   case to_hack {
     [] -> #(p1_good, p2_good) |> helper.map_both(dict.size)
     [#(start, start_cost), ..rest] -> {
-      let #(p1_good, p2_good) =
-        rest
-        |> list.fold(#(p1_good, p2_good), fn(caches, end) {
-          let #(end, end_cost) = end
+      let hack_it = fn(acc, mask) {
+        mask
+        |> list.map(grid.add_points(_, start))
+        |> list.fold(acc, fn(goods, end) {
+          let end_cost = dict.get(step_costs, end) |> result.unwrap(0)
           let distance = dist(start, end)
           let savings = end_cost - start_cost - distance
-          use <- bool.guard(savings < good || distance <= 1, caches)
-          case distance <= p1_dist, distance <= p2_dist {
-            True, True ->
-              caches |> helper.map_both(dict.insert(_, #(start, end), savings))
-            True, _ ->
-              caches |> pair.map_first(dict.insert(_, #(start, end), savings))
-            _, True ->
-              caches |> pair.map_second(dict.insert(_, #(start, end), savings))
-            _, _ -> caches
-          }
+          use <- bool.guard(savings < good, goods)
+          goods |> dict.insert(#(start, end), savings)
         })
+      }
+
+      let p1_good = p1_good |> hack_it(p1_mask)
+      let p2_good = p2_good |> hack_it(p2_mask)
+
       let bar = case bar {
         option.None -> bar
         option.Some(b) -> {
@@ -125,9 +123,35 @@ fn good_hacks(
           option.Some(b)
         }
       }
-      good_hacks(rest, good, p1_dist, p2_dist, p1_good, p2_good, bar, tick)
+
+      wall_hacks(
+        rest,
+        good,
+        step_costs,
+        p1_mask,
+        p2_mask,
+        p1_good,
+        p2_good,
+        bar,
+        tick,
+      )
     }
   }
+}
+
+fn dist(a: Step, b: Step) -> Int {
+  grid.manhatten_distance(a, b)
+}
+
+fn mask(size: Int) -> List(Step) {
+  list.range(0, size)
+  |> list.flat_map(fn(x) {
+    list.range(0, size - x)
+    |> list.flat_map(fn(y) {
+      [Point(x, y), Point(-x, y), Point(x, -y), Point(-x, -y)]
+    })
+  })
+  |> list.unique
 }
 
 pub fn test_solve(data: String, good: Int) -> #(Int, Int) {
@@ -136,10 +160,6 @@ pub fn test_solve(data: String, good: Int) -> #(Int, Int) {
 
 pub fn solve(data: String, visualization: helper.Visualize) -> #(Int, Int) {
   do_solve(data, 100, visualization)
-}
-
-fn dist(a: Step, b: Step) -> Int {
-  grid.manhatten_distance(a, b)
 }
 
 fn do_solve(
@@ -165,12 +185,30 @@ fn do_solve(
     False -> option.None
   }
 
+  let p1_mask = mask(2)
+  let p2_mask = mask(20)
+  let step_costs =
+    non_cheat_path.steps
+    |> nel.reverse
+    |> nel.to_list
+    |> list.index_map(fn(s, i) { #(s, i) })
+    |> dict.from_list
+
   let #(p1, p2) =
     non_cheat_path.steps
     |> nel.reverse
     |> nel.to_list
     |> list.index_map(fn(s, i) { #(s, i) })
-    |> good_hacks(good, 2, 20, dict.new(), dict.new(), bar, tick)
+    |> wall_hacks(
+      good,
+      step_costs,
+      p1_mask,
+      p2_mask,
+      dict.new(),
+      dict.new(),
+      bar,
+      tick,
+    )
 
   case bar {
     option.None -> Nil
