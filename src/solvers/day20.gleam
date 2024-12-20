@@ -89,30 +89,24 @@ fn wall_hacks(
   to_hack: List(#(Step, Int)),
   good: Int,
   step_costs: Dict(Step, Int),
-  p1_mask: List(Point),
-  p2_mask: List(Point),
-  p1_good: Dict(#(Step, Step), Int),
-  p2_good: Dict(#(Step, Step), Int),
+  mask: List(Point),
+  good_hacks: Dict(#(Step, Step), Int),
   bar: Option(ProgressStyle),
   tick: Int,
-) -> #(Int, Int) {
+) -> Int {
   case to_hack {
-    [] -> #(p1_good, p2_good) |> helper.map_both(dict.size)
+    [] -> good_hacks |> dict.size
     [#(start, start_cost), ..rest] -> {
-      let hack_it = fn(acc, mask) {
+      let good_hacks =
         mask
         |> list.map(grid.add_points(_, start))
-        |> list.fold(acc, fn(goods, end) {
+        |> list.fold(good_hacks, fn(goods, end) {
           let end_cost = dict.get(step_costs, end) |> result.unwrap(0)
           let distance = dist(start, end)
           let savings = end_cost - start_cost - distance
           use <- bool.guard(savings < good, goods)
           goods |> dict.insert(#(start, end), savings)
         })
-      }
-
-      let p1_good = p1_good |> hack_it(p1_mask)
-      let p2_good = p2_good |> hack_it(p2_mask)
 
       let bar = case bar {
         option.None -> bar
@@ -123,18 +117,7 @@ fn wall_hacks(
           option.Some(b)
         }
       }
-
-      wall_hacks(
-        rest,
-        good,
-        step_costs,
-        p1_mask,
-        p2_mask,
-        p1_good,
-        p2_good,
-        bar,
-        tick,
-      )
+      wall_hacks(rest, good, step_costs, mask, good_hacks, bar, tick)
     }
   }
 }
@@ -175,46 +158,65 @@ fn do_solve(
 
   let tick = non_cheat_path.cost / 100
 
-  let bar = case visualization != helper.None {
+  let p1_mask = mask(2)
+  let p2_mask = mask(20)
+
+  let steps =
+    non_cheat_path.steps
+    |> nel.reverse
+    |> nel.to_list
+    |> list.index_map(fn(s, i) { #(s, i) })
+
+  let step_costs = steps |> dict.from_list
+
+  let bar1 = case
+    visualization == helper.Both || visualization == helper.Part1
+  {
     True ->
       option.Some(
         progress.fancy_thick_bar()
         |> progress.with_left_text(helper.faff_pink("["))
-        |> progress.with_right_text(helper.faff_pink("] Hacking the Gibson")),
+        |> progress.with_right_text(helper.faff_pink("] Part 1")),
       )
     False -> option.None
   }
 
-  let p1_mask = mask(2)
-  let p2_mask = mask(20)
-  let step_costs =
-    non_cheat_path.steps
-    |> nel.reverse
-    |> nel.to_list
-    |> list.index_map(fn(s, i) { #(s, i) })
-    |> dict.from_list
+  let p1 = wall_hacks(steps, good, step_costs, p1_mask, dict.new(), bar1, tick)
 
-  let #(p1, p2) =
-    non_cheat_path.steps
-    |> nel.reverse
-    |> nel.to_list
-    |> list.index_map(fn(s, i) { #(s, i) })
-    |> wall_hacks(
-      good,
-      step_costs,
-      p1_mask,
-      p2_mask,
-      dict.new(),
-      dict.new(),
-      bar,
-      tick,
-    )
-
-  case bar {
+  case bar1 {
     option.None -> Nil
     option.Some(bar) ->
       bar
-      |> progress.with_right_text("] Done!" |> helper.faff_pink)
+      |> progress.with_right_text(
+        "] Part 1: " |> helper.faff_pink
+        <> helper.int_to_string_with_commas(p1) |> helper.unnamed_blue,
+      )
+      |> progress.finish
+      |> progress.print_bar
+  }
+
+  let bar2 = case
+    visualization == helper.Both || visualization == helper.Part2
+  {
+    True ->
+      option.Some(
+        progress.fancy_thick_bar()
+        |> progress.with_left_text(helper.faff_pink("["))
+        |> progress.with_right_text(helper.faff_pink("] Part 2")),
+      )
+    False -> option.None
+  }
+
+  let p2 = wall_hacks(steps, good, step_costs, p2_mask, dict.new(), bar2, tick)
+
+  case bar2 {
+    option.None -> Nil
+    option.Some(bar) ->
+      bar
+      |> progress.with_right_text(
+        "] Part 2: " |> helper.faff_pink
+        <> helper.int_to_string_with_commas(p2) |> helper.unnamed_blue,
+      )
       |> progress.finish
       |> progress.print_bar
   }
