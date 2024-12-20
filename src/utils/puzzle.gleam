@@ -57,7 +57,7 @@ const days = [
   #(16, #(day16.solve, "Reindeer Maze")),
   #(17, #(day17.solve, "Chronospatial Computer")),
   #(18, #(day18.solve, "RAM Run")), #(19, #(day19.solve, "Linen Layout")),
-  #(20, #(day20.solve, "NOT DEFINED")), #(21, #(day21.solve, "NOT DEFINED")),
+  #(20, #(day20.solve, "Race Condition")), #(21, #(day21.solve, "NOT DEFINED")),
   #(22, #(day22.solve, "NOT DEFINED")), #(23, #(day23.solve, "NOT DEFINED")),
   #(24, #(day24.solve, "NOT DEFINED")), #(25, #(day25.solve, "NOT DEFINED")),
 ]
