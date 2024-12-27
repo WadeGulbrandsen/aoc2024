@@ -1,32 +1,32 @@
 # Run times
 
-Run at 2024-12-27T16:27:13.204-05:00 using 16 threads.
+Run at 2024-12-27T18:42:35.805-05:00 using 16 threads.
 
 |   Day | Title                          |       Time (ms) |          % Time |
 | ----: | :----------------------------- | --------------: | --------------: |
-|     1 | Historian Hysteria             |          10.342 |           0.022 |
-|     2 | Red-Nosed Reports              |           7.782 |           0.017 |
-|     3 | Mull It Over                   |           3.994 |           0.009 |
-|     4 | Ceres Search                   |          35.021 |           0.076 |
-|     5 | Print Queue                    |           8.602 |           0.019 |
-|     6 | Guard Gallivant                |        1788.518 |           3.887 |
-|     7 | Bridge Repair                  |         152.678 |           0.332 |
-|     8 | Resonant Collinearity          |           4.096 |           0.009 |
-|     9 | Disk Fragmenter                |          95.232 |           0.207 |
-|    10 | Hoof It                        |          17.818 |           0.039 |
-|    11 | Plutonian Pebbles              |          73.421 |           0.160 |
-|    12 | Garden Groups                  |         359.117 |           0.781 |
-|    13 | Claw Contraption               |           2.560 |           0.006 |
-|    14 | Restroom Redoubt               |         977.818 |           2.125 |
-|    15 | Warehouse Woes                 |          43.827 |           0.095 |
-|    16 | Reindeer Maze                  |         864.358 |           1.879 |
-|    17 | Chronospatial Computer         |          19.456 |           0.042 |
-|    18 | RAM Run                        |         589.107 |           1.280 |
-|    19 | Linen Layout                   |         373.350 |           0.811 |
-|    20 | Race Condition                 |        2543.104 |           5.527 |
-|    21 | Keypad Conundrum               |           5.837 |           0.013 |
-|    22 | Monkey Market                  |       25796.710 |          56.070 |
-|    23 | LAN Party (Part 1)             |       12204.749 |          26.527 |
-|    24 | Crossed Wires (Part 1)         |           8.806 |           0.019 |
-|    25 | Code Chronicle (Part 1)        |          22.016 |           0.048 |
-|                                 TOTAL ||       46008.320 |         100.000 |
+|     1 | Historian Hysteria             |          10.445 |           0.023 |
+|     2 | Red-Nosed Reports              |           8.704 |           0.019 |
+|     3 | Mull It Over                   |           3.891 |           0.009 |
+|     4 | Ceres Search                   |          37.786 |           0.083 |
+|     5 | Print Queue                    |           8.294 |           0.018 |
+|     6 | Guard Gallivant                |        2135.040 |           4.699 |
+|     7 | Bridge Repair                  |         151.962 |           0.334 |
+|     8 | Resonant Collinearity          |           3.072 |           0.007 |
+|     9 | Disk Fragmenter                |          95.949 |           0.211 |
+|    10 | Hoof It                        |          17.408 |           0.038 |
+|    11 | Plutonian Pebbles              |          68.608 |           0.151 |
+|    12 | Garden Groups                  |         369.664 |           0.814 |
+|    13 | Claw Contraption               |           2.150 |           0.005 |
+|    14 | Restroom Redoubt               |         970.547 |           2.136 |
+|    15 | Warehouse Woes                 |          46.182 |           0.102 |
+|    16 | Reindeer Maze                  |         845.824 |           1.861 |
+|    17 | Chronospatial Computer         |          18.637 |           0.041 |
+|    18 | RAM Run                        |         599.142 |           1.319 |
+|    19 | Linen Layout                   |         373.555 |           0.822 |
+|    20 | Race Condition                 |        2577.101 |           5.671 |
+|    21 | Keypad Conundrum               |           4.403 |           0.010 |
+|    22 | Monkey Market                  |       30356.787 |          66.807 |
+|    23 | LAN Party                      |        6707.098 |          14.760 |
+|    24 | Crossed Wires (Part 1)         |           4.096 |           0.009 |
+|    25 | Code Chronicle                 |          23.450 |           0.052 |
+|                                 TOTAL ||       45439.795 |         100.000 |

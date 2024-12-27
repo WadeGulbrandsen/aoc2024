@@ -59,10 +59,9 @@ const days = [
   #(18, #(day18.solve, "RAM Run")), #(19, #(day19.solve, "Linen Layout")),
   #(20, #(day20.solve, "Race Condition")),
   #(21, #(day21.solve, "Keypad Conundrum")),
-  #(22, #(day22.solve, "Monkey Market")),
-  #(23, #(day23.solve, "LAN Party (Part 1)")),
+  #(22, #(day22.solve, "Monkey Market")), #(23, #(day23.solve, "LAN Party")),
   #(24, #(day24.solve, "Crossed Wires (Part 1)")),
-  #(25, #(day25.solve, "Code Chronicle (Part 1)")),
+  #(25, #(day25.solve, "Code Chronicle")),
 ]
 
 const answers_path = "./input/answers.json"

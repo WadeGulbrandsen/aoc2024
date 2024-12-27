@@ -43,7 +43,7 @@ pub fn solve_test() {
 #.#..
 #.#.#
 #####",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(3, 0))
 }

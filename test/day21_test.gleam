@@ -9,7 +9,7 @@ pub fn solve_test() {
 179A
 456A
 379A",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(126_384, 154_115_708_116_294))
 }

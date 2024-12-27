@@ -8,7 +8,7 @@ pub fn solve_test() {
 10
 100
 2024",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(37_327_623, 24))
 }
@@ -19,7 +19,7 @@ pub fn solve2_test() {
 2
 3
 2024",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(37_990_510, 23))
 }

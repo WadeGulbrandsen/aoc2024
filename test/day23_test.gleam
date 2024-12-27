@@ -36,7 +36,7 @@ co-tc
 wh-qp
 tb-vc
 td-yn",
-    helper.Both,
+    helper.None,
   )
-  |> should.equal(#(7, 0))
+  |> should.equal(#(7, 4))
 }

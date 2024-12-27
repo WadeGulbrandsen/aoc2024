@@ -14,7 +14,7 @@ ubwu
 bwurrg
 brgr
 bbrgwb",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(6, 16))
 }
