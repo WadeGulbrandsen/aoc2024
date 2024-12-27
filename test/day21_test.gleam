@@ -11,5 +11,5 @@ pub fn solve_test() {
 379A",
     helper.Both,
   )
-  |> should.equal(#(126_384, 0))
+  |> should.equal(#(126_384, 154_115_708_116_294))
 }

@@ -2,15 +2,12 @@ import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None, Some}
-import gleam/order
 import gleam/pair
 import gleam/result
-import gleam/set
 import gleam/string
-import gleamy/non_empty_list.{type NonEmptyList} as nel
-import gleamy/priority_queue.{type Queue} as pq
-import utils/grid.{type Direction, type Grid, type Point, E, N, S, W}
+import rememo/memo
+import tote/bag.{type Bag}
+import utils/grid.{type Direction, type Grid, E, N, S, W}
 import utils/helper
 
 type Keypad {
@@ -23,7 +20,65 @@ type Sequence =
   List(Keypad)
 
 type Sequences =
-  List(Sequence)
+  Bag(Sequence)
+
+type Path {
+  Left(Int)
+  Right(Int)
+  Up(Int)
+  Down(Int)
+}
+
+fn sequences_size(seqs: Sequences) -> Int {
+  bag.fold(seqs, 0, fn(total, seq, count) { total + list.length(seq) * count })
+}
+
+fn get_sequence(
+  from f: Keypad,
+  to t: Keypad,
+  keypad kp: Grid(Keypad),
+) -> Sequence {
+  let assert Ok(#(start, _)) =
+    kp.points
+    |> dict.to_list
+    |> list.find(fn(point_kp) { point_kp.1 == f })
+  let assert Ok(#(end, _)) =
+    kp.points
+    |> dict.to_list
+    |> list.find(fn(point_kp) { point_kp.1 == t })
+  let horizontal = {
+    let diff = end.x - start.x
+    case diff < 0 {
+      True -> Left(-diff)
+      False -> Right(diff)
+    }
+  }
+  let verticle = {
+    let diff = end.y - start.y
+    case diff < 0 {
+      True -> Up(-diff)
+      False -> Down(diff)
+    }
+  }
+  let ordered = case horizontal {
+    _ if end.x == 0 && start.y == 3 -> [verticle, horizontal]
+    _ if start.x == 0 && end.y == 3 -> [horizontal, verticle]
+    _ if f == Move(W) -> [horizontal, verticle]
+    _ if t == Move(W) -> [verticle, horizontal]
+    Left(_) -> [horizontal, verticle]
+    _ -> [verticle, horizontal]
+  }
+  ordered |> list.flat_map(path_to_sequence) |> list.append([Activate])
+}
+
+fn path_to_sequence(path p: Path) -> Sequence {
+  case p {
+    Left(x) -> list.repeat(Move(W), x)
+    Right(x) -> list.repeat(Move(E), x)
+    Up(x) -> list.repeat(Move(N), x)
+    Down(x) -> list.repeat(Move(S), x)
+  }
+}
 
 fn numeric_keypad() -> Grid(Keypad) {
   "789\n456\n123\n.0A" |> grid.from_string(string.to_graphemes, char_to_keypad)
@@ -48,71 +103,6 @@ fn char_to_keypad(char: String) -> Result(Keypad, Nil) {
   }
 }
 
-type Path {
-  Path(to_goal: Int, cost: Int, steps: NonEmptyList(Step))
-}
-
-type Step {
-  Step(direction: Direction, point: Point, content: Keypad)
-}
-
-fn best_paths(
-  keypad: Grid(Keypad),
-  queue: Queue(Path),
-  goal: Point,
-  seen: Dict(Step, Int),
-  best: Option(Int),
-  acc: List(Path),
-) -> List(Path) {
-  use <- bool.guard(pq.is_empty(queue), acc)
-
-  let assert Ok(#(q, queue)) = pq.pop(queue)
-
-  let #(queue, best, acc) = {
-    use <- bool.guard(greater_than_best(q.cost, best), #(queue, best, acc))
-    use <- bool.guard(
-      q.steps.first.point == goal && best == Some(q.cost),
-      #(queue, best, [q, ..acc]),
-    )
-    use <- bool.guard(q.steps.first.point == goal, #(queue, Some(q.cost), [q]))
-    let next =
-      get_next(q.steps.first.point, keypad)
-      |> list.filter_map(fn(step) {
-        let g = 1 + q.cost
-        use <- bool.guard(greater_than_best(g, best), Error(Nil))
-        let h = grid.manhatten_distance(step.point, goal)
-        case dict.get(seen, step) {
-          Ok(x) if x <= g -> Error(Nil)
-          _ -> Ok(Path(h, g, nel.Next(step, q.steps)))
-        }
-      })
-    let queue =
-      next |> list.fold(queue, fn(queue, path) { pq.push(queue, path) })
-    #(queue, best, acc)
-  }
-  best_paths(keypad, queue, goal, seen, best, acc)
-}
-
-fn get_next(point: Point, keypad: Grid(Keypad)) -> List(Step) {
-  [N, E, S, W]
-  |> list.filter_map(fn(dir) {
-    let next_point = grid.move(point, dir, 1)
-    grid.get(keypad, next_point)
-    |> result.map(Step(dir, next_point, _))
-  })
-}
-
-fn greater_than_best(g: Int, best: Option(Int)) -> Bool {
-  case best {
-    Some(x) -> g > x
-    None -> False
-  }
-}
-
-fn path_compare(a: Path, b: Path) -> order.Order {
-  int.compare(a.cost + a.to_goal, b.cost + a.to_goal)
-}
-
 fn parse(data: String) -> List(#(List(Keypad), Int)) {
   data
   |> string.split("\n")
@@ -124,168 +114,97 @@ fn parse(data: String) -> List(#(List(Keypad), Int)) {
   })
 }
 
-// fn keypad_to_char(kp: Keypad) -> String {
-//   case kp {
-//     Number(x) -> int.to_string(x)
-//     Move(N) -> "^"
-//     Move(S) -> "v"
-//     Move(W) -> "<"
-//     Move(E) -> ">"
-//     Activate -> "A"
-//     _ -> "."
-//   }
-// }
-
-// fn print_sequences_and_numeric(s_num: #(Sequences, Int)) {
-//   let #(s, num) = s_num
-//   let s =
-//     s
-//     |> list.map(fn(seq) {
-//       #(list.length(seq), seq |> list.map(keypad_to_char) |> string.concat)
-//     })
-//   pprint.styled(#(num, s)) |> io.println_error
-//   s_num
-// }
-
-fn code_to_moves(
-  code: List(Keypad),
-  current: Keypad,
-  numpad: Grid(Keypad),
-  acc: List(List(Sequence)),
-) -> Sequences {
-  case code {
-    [] -> build_sequences(acc |> list.reverse, [])
-    [next, ..rest] -> {
-      let paths = best_keypad_paths(current, next, numpad)
-      code_to_moves(rest, next, numpad, [
-        paths |> list.map(path_to_sequence),
-        ..acc
-      ])
-    }
-  }
-}
-
 fn moves_to_moves(
-  moves: List(Keypad),
-  current: Keypad,
-  cache: Dict(#(Keypad, Keypad), Sequences),
-  acc: List(List(Sequence)),
+  moves: Sequences,
+  times: Int,
+  kp_cache: Dict(#(Keypad, Keypad), Sequence),
+  cache,
 ) -> Sequences {
-  case moves {
-    [] -> build_sequences(acc |> list.reverse, [])
-    [next, ..rest] -> {
-      let assert Ok(seqs) = dict.get(cache, #(current, next))
-      moves_to_moves(rest, next, cache, [seqs, ..acc])
-    }
-  }
-}
-
-fn build_sequences(to_add: List(Sequences), acc: Sequences) -> Sequences {
-  case to_add {
-    [] -> acc
-    [x, ..rest] -> {
-      let acc = case list.is_empty(acc) {
-        True -> x
-        False -> {
-          acc
-          |> list.flat_map(fn(head) { x |> list.map(list.append(head, _)) })
-        }
-      }
-      build_sequences(rest, acc)
-    }
-  }
-}
-
-fn best_keypad_paths(
-  from: Keypad,
-  to: Keypad,
-  keypad: Grid(Keypad),
-) -> List(Path) {
-  let assert Ok(#(start, _)) =
-    keypad.points
-    |> dict.to_list
-    |> list.find(fn(point_kp) { point_kp.1 == from })
-  let assert Ok(#(end, _)) =
-    keypad.points
-    |> dict.to_list
-    |> list.find(fn(point_kp) { point_kp.1 == to })
-  let initial_path =
-    Path(grid.manhatten_distance(start, end), 0, nel.End(Step(E, start, from)))
-  let queue = pq.new(path_compare) |> pq.push(initial_path)
-  best_paths(keypad, queue, end, dict.new(), None, [])
-}
-
-fn path_to_sequence(path: Path) -> Sequence {
-  path.steps
-  |> nel.to_list
-  |> list.map(fn(step) { Move(step.direction) })
-  |> list.prepend(Activate)
-  |> list.reverse
-  |> list.drop(1)
-}
-
-fn dir_path_cache() -> Dict(#(Keypad, Keypad), Sequences) {
-  let dirpad = directional_keypad()
-  let dirs =
-    [N, E, S, W]
-    |> list.map(Move(_))
-    |> list.prepend(Activate)
-
-  dirs
-  |> list.fold(dict.new(), fn(cache, from) {
-    dirs
-    |> list.fold(cache, fn(cache, to) {
-      dict.insert(
-        cache,
-        #(from, to),
-        best_keypad_paths(from, to, dirpad) |> list.map(path_to_sequence),
-      )
+  use <- bool.guard(times <= 0 || bag.is_empty(moves), moves)
+  let next =
+    moves
+    |> bag.fold(bag.new(), fn(b, s, i) {
+      s
+      |> next_sequence(kp_cache, cache)
+      |> split_sequence
+      |> list.fold(b, fn(bag, seq) { bag |> bag.insert(i, seq) })
     })
-  })
+  moves_to_moves(next, times - 1, kp_cache, cache)
 }
 
-fn keep_shortest(sequences: Sequences) -> Sequences {
-  use <- bool.guard(list.is_empty(sequences), [])
-  let assert [first, ..rest] = sequences
-  rest
-  |> list.fold(
-    #(list.length(first), set.from_list([first])),
-    fn(lowest_acc, seq) {
-      let #(lowest, acc) = lowest_acc
-      let len = list.length(seq)
-      case int.compare(len, lowest) {
-        order.Gt -> lowest_acc
-        order.Eq -> #(lowest, set.insert(acc, seq))
-        order.Lt -> #(len, set.from_list([seq]))
-      }
-    },
-  )
-  |> pair.second
-  |> set.to_list
+fn split_sequence(sequence: Sequence) -> List(Sequence) {
+  sequence
+  |> list.fold(#([], []), fn(p, move) {
+    let #(acc, current) = p
+    let current = current |> list.append([move])
+    case move {
+      Activate -> #(acc |> list.append([current]), [])
+      _ -> #(acc, current)
+    }
+  })
+  |> pair.first
+}
+
+fn next_sequence(
+  sequence: Sequence,
+  kp_cache: Dict(#(Keypad, Keypad), Sequence),
+  cache,
+) -> Sequence {
+  use <- memo.memoize(cache, sequence)
+  [Activate, ..sequence]
+  |> list.window_by_2
+  |> list.map(dict.get(kp_cache, _))
+  |> result.values
+  |> list.flatten
+}
+
+fn kp_cache() -> Dict(#(Keypad, Keypad), Sequence) {
+  let dirpad = directional_keypad()
+  let dirs = [N, E, S, W] |> list.map(Move(_)) |> list.prepend(Activate)
+  let dir_cache =
+    dirs
+    |> list.fold(dict.new(), fn(cache, from) {
+      dirs
+      |> list.fold(cache, fn(cache, to) {
+        dict.insert(cache, #(from, to), get_sequence(from, to, dirpad))
+      })
+    })
+  let numpad = numeric_keypad()
+  let nums = list.range(0, 9) |> list.map(Number(_)) |> list.prepend(Activate)
+  let num_cache =
+    nums
+    |> list.fold(dict.new(), fn(cache, from) {
+      nums
+      |> list.fold(cache, fn(cache, to) {
+        dict.insert(cache, #(from, to), get_sequence(from, to, numpad))
+      })
+    })
+  dir_cache |> dict.merge(num_cache)
 }
 
 pub fn solve(data: String, _visualization: helper.Visualize) -> #(Int, Int) {
-  let numpad = numeric_keypad()
-  let cache = dir_path_cache()
+  use cache <- memo.create()
+  let kp_cache = kp_cache()
+
+  let #(codes, numerics) = list.unzip(parse(data))
+
+  let first_pass =
+    codes
+    |> list.map(fn(code) { bag.from_list([code]) })
+    |> list.map(moves_to_moves(_, 3, kp_cache, cache))
 
   let part1 =
-    parse(data)
-    |> helper.parallel_map(fn(p) {
-      let #(code, numeric) = p
-      code
-      |> code_to_moves(Activate, numpad, [])
-      |> helper.parallel_map(moves_to_moves(_, Activate, cache, []))
-      |> list.flatten
-      |> keep_shortest
-      |> helper.parallel_map(moves_to_moves(_, Activate, cache, []))
-      |> list.flatten
-      |> keep_shortest
-      |> list.first
-      |> result.unwrap([])
-      |> list.length
-      |> int.multiply(numeric)
-    })
+    first_pass
+    |> list.map(sequences_size)
+    |> list.map2(numerics, int.multiply)
     |> int.sum
 
-  #(part1, 0)
+  let part2 =
+    first_pass
+    |> list.map(moves_to_moves(_, 23, kp_cache, cache))
+    |> list.map(sequences_size)
+    |> list.map2(numerics, int.multiply)
+    |> int.sum
+
+  #(part1, part2)
 }
