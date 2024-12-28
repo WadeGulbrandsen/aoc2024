@@ -59,5 +59,5 @@ fn non_overlapping_pairs(locks: Locks, keys: Keys) -> LockKeyPairs {
 pub fn solve(data: String, _visualization: helper.Visualize) -> #(Int, Int) {
   let #(locks, keys) = parse(data)
   let pairs = non_overlapping_pairs(locks, keys)
-  #(list.length(pairs), 0)
+  #(list.length(pairs), 50)
 }

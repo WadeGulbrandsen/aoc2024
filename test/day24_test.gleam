@@ -2,22 +2,22 @@ import gleeunit/should
 import solvers/day24
 import utils/helper
 
-// pub fn solve_test() {
-//   day24.solve(
-//     "x00: 1
-// x01: 1
-// x02: 1
-// y00: 0
-// y01: 1
-// y02: 0
+pub fn solve_test() {
+  day24.solve(
+    "x00: 1
+x01: 1
+x02: 1
+y00: 0
+y01: 1
+y02: 0
 
-// x00 AND y00 -> z00
-// x01 XOR y01 -> z01
-// x02 OR y02 -> z02",
-//     helper.Both,
-//   )
-//   |> should.equal(#(4, 0))
-// }
+x00 AND y00 -> z00
+x01 XOR y01 -> z01
+x02 OR y02 -> z02",
+    helper.None,
+  )
+  |> should.equal(#(4, 0))
+}
 
 pub fn solve2_test() {
   day24.solve(
@@ -68,7 +68,7 @@ y03 OR x01 -> nrd
 hwm AND bqk -> z03
 tgd XOR rvg -> z12
 tnw OR pbm -> gnj",
-    helper.Both,
+    helper.None,
   )
   |> should.equal(#(2024, 0))
 }

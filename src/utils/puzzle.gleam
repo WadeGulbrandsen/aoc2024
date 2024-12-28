@@ -60,7 +60,7 @@ const days = [
   #(20, #(day20.solve, "Race Condition")),
   #(21, #(day21.solve, "Keypad Conundrum")),
   #(22, #(day22.solve, "Monkey Market")), #(23, #(day23.solve, "LAN Party")),
-  #(24, #(day24.solve, "Crossed Wires (Part 1)")),
+  #(24, #(day24.solve, "Crossed Wires")),
   #(25, #(day25.solve, "Code Chronicle")),
 ]
 
